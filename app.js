@@ -3,7 +3,7 @@
 // ==========================================
 
 const allLocations = [
-    { id: 'Lieu1', x: 500, y: 500 }, // Remplacer par les vraies coordonées
+    { id: 'Lieu1', x: 500, y: 500 }, // ⚠️ Remplacer par les vraies coordonées
     { id: 'Lieu2', x: 500, y: 500 }, 
     { id: 'Lieu3', x: 500, y: 500 },
     { id: 'Lieu4', x: 500, y: 500 },
@@ -13,7 +13,7 @@ const allLocations = [
 
 const maxScorePerRound = 5000;
 const totalRounds = 5;
-const roundTime = 30; 
+const roundTime = 30; // Temps d'un round en secondes
 
 let currentRound = 1;
 let totalScore = 0;
@@ -73,10 +73,10 @@ const bounds = [[0, 0], [1427, 1427]];
 
 const map = L.map('map', { 
     crs: L.CRS.Simple, 
-    minZoom: -5,               // 📍 On permet de dézoomer beaucoup plus
+    minZoom: -5, 
     maxZoom: 4, 
-    zoomSnap: 0,               // 📍 LE SECRET : Permet à la carte de remplir 100% de la boîte sans bandes noires !
-    zoomDelta: 0.5,            // Rend le zoom à la molette plus doux
+    zoomSnap: 0, 
+    zoomDelta: 0.5,
     zoomControl: false, 
     attributionControl: false,
     maxBounds: bounds,         
@@ -93,14 +93,16 @@ const mapWrapper = document.getElementById('map-wrapper');
 const timerDisplay = document.getElementById('timer-display');
 const msgBox = document.getElementById('waiting-msg');
 
-// 📍 CORRECTION DU BUG DE LA MOLETTE
+// 📍 LA CORRECTION EST ICI : Observe la taille en temps réel (Plus de noir !)
+const resizeObserver = new ResizeObserver(() => {
+    map.invalidateSize({ pan: false });
+});
+resizeObserver.observe(document.getElementById('map-container'));
+
+// On remet la carte parfaitement centrée uniquement quand l'animation d'agrandissement est 100% finie
 document.getElementById('map-container').addEventListener('transitionend', function(e) {
-    // On vérifie que l'animation vient bien de la boîte (et pas des images de la carte pendant un zoom)
-    if (e.target.id === 'map-container') {
-        map.invalidateSize();
-        if (!hasValidated) {
-            map.fitBounds(bounds);
-        }
+    if (e.target.id === 'map-container' && !hasValidated) {
+        map.fitBounds(bounds);
     }
 });
 
@@ -202,7 +204,6 @@ function processRoundResult() {
     mapWrapper.classList.add('result-mode'); 
 
     setTimeout(() => {
-        map.invalidateSize(); 
         map.flyToBounds(pointsToFit, { padding: [60, 60], duration: 1.5 });
 
         setTimeout(() => {
@@ -265,7 +266,6 @@ function goToNextRound() {
     guessBtn.innerText = "Placer le point";
 
     setTimeout(() => {
-        map.invalidateSize();
         map.fitBounds(bounds);
         
         viewer.loadScene(gameLocations[currentRound - 1].id);
