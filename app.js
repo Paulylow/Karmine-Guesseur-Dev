@@ -71,11 +71,17 @@ const viewer = pannellum.viewer('panorama', {
 // 3. LA CARTE (LEAFLET)
 // ==========================================
 
-// maxZoom augmenté à 4 pour ta map HD
-const map = L.map('map', { crs: L.CRS.Simple, minZoom: -2, maxZoom: 4, zoomControl: false, attributionControl: false });
-
-// 📍 LA NOUVELLE TAILLE EXACTE DE TA CARTE 📍
 const bounds = [[0, 0], [1427, 1427]];
+
+const map = L.map('map', { 
+    crs: L.CRS.Simple, 
+    minZoom: -2, 
+    maxZoom: 4, 
+    zoomControl: false, 
+    attributionControl: false,
+    maxBounds: bounds,         // 📍 Empêche de glisser en dehors de la carte !
+    maxBoundsViscosity: 1.0    // 📍 Rend les bords de la carte solides comme un mur
+});
 
 L.imageOverlay('maps/map.png', bounds).addTo(map);
 map.fitBounds(bounds);
@@ -167,7 +173,6 @@ function processRoundResult() {
 
         distance = Math.sqrt(Math.pow(targetLocation.x - clickX, 2) + Math.pow(targetLocation.y - clickY, 2));
         
-        // ⚖️ Ajustement de la difficulté (* 3.5 au lieu de 5 car la map va jusqu'à 1427)
         score = Math.round(maxScorePerRound - (distance * 3.5)); 
         if (score < 0) score = 0;
 
