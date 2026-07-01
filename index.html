@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-width=1.0">
-    <title>KarmineGuesser</title>
+    <title>KarmineGuesser (Mode Dev)</title>
     
     <link rel="stylesheet" href="style.css">
     
@@ -20,11 +20,11 @@
         <div class="game-stats">
             <div class="stat-box">
                 <span class="stat-label">Temps</span>
-                <span class="stat-value" id="timer-display">30</span>
+                <span class="stat-value" id="timer-display">DEV</span>
             </div>
             <div class="stat-box">
                 <span class="stat-label">Lieu</span>
-                <span class="stat-value"><span id="round-display">1</span>/5</span>
+                <span class="stat-value"><span id="round-display">1</span>/6</span>
             </div>
             <div class="stat-box">
                 <span class="stat-label">Score</span>
@@ -48,7 +48,7 @@
         <h2 class="art-title">Résultat</h2>
         <p class="distance-text">Distance : <span id="distanceDisplay" class="cyan-text">0</span></p>
         <p class="score-num">+<span id="scoreDisplay">0</span> pts</p>
-        <p class="waiting-text" id="waiting-msg">En attente des autres joueurs... (<span id="auto-next-timer">5</span>s)</p>
+        <button class="hero-btn" id="next-btn" style="margin-top: 15px;">Lieu suivant</button>
     </div>
 
     <script src="app.js"></script>
