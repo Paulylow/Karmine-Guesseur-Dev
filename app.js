@@ -8,12 +8,12 @@ const maxScore = 5000;
 const viewer = pannellum.viewer('panorama', {
     "type": "cubemap",
     "cubeMap": [
-        "panoramas/Lieu1/panorama_0.jpg", // Devant
-        "panoramas/Lieu1/panorama_1.jpg", // Droite
-        "panoramas/Lieu1/panorama_2.jpg", // Arrière
-        "panoramas/Lieu1/panorama_3.jpg", // Gauche
+        "panoramas/Lieu1/panorama_0.png", // Devant
+        "panoramas/Lieu1/panorama_1.png", // Droite
+        "panoramas/Lieu1/panorama_2.png", // Arrière
+        "panoramas/Lieu1/panorama_3.png", // Gauche
         "panoramas/Lieu1/panorama_4.png", // Haut (Vérifie toujours s'il est en .png ou .jpg selon tes captures)
-        "panoramas/Lieu1/panorama_5.jpg"  // Bas
+        "panoramas/Lieu1/panorama_5.png"  // Bas
     ],
     "autoLoad": true,
     "showZoomCtrl": false,
