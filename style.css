@@ -20,47 +20,21 @@ body, html {
 }
 
 /* ===== 360 PANORAMA ===== */
-#panorama {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 1;
-}
+#panorama { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; }
 
 /* ===== UI EN HAUT ===== */
 .game-header {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    z-index: 10;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding: 20px 40px;
-    background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%);
-    pointer-events: none;
+    position: absolute; top: 0; left: 0; width: 100%; z-index: 10;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: 20px 40px; background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%); pointer-events: none;
 }
 
-.logo {
-    font-family: 'Clash Display', sans-serif;
-    font-size: 32px;
-    font-weight: 700;
-    color: white;
-    text-transform: uppercase;
-}
+.logo { font-family: 'Clash Display', sans-serif; font-size: 32px; font-weight: 700; color: white; text-transform: uppercase; }
 .logo em { font-style: normal; color: var(--cyan); }
 
 .game-stats {
-    display: flex;
-    gap: 20px;
-    background: rgba(10, 10, 10, 0.8);
-    border: 2px solid var(--cyan);
-    padding: 10px 20px;
-    border-radius: 8px;
-    pointer-events: auto;
+    display: flex; gap: 20px; background: rgba(10, 10, 10, 0.8);
+    border: 2px solid var(--cyan); padding: 10px 20px; border-radius: 8px; pointer-events: auto;
 }
 
 .stat-box { display: flex; flex-direction: column; align-items: center; min-width: 60px; }
@@ -76,6 +50,7 @@ body, html {
     bottom: 30px;
     right: 30px;
     z-index: 10;
+    transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .map-hover-area {
@@ -92,7 +67,8 @@ body, html {
     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 
-.map-hover-area:hover, .map-hover-area.active {
+/* Comportement normal de la minimap (Hover) */
+#map-wrapper:not(.result-mode) .map-hover-area:hover {
     width: 550px;
     height: 400px;
     opacity: 1;
@@ -102,65 +78,72 @@ body, html {
 #map { flex-grow: 1; width: 100%; cursor: crosshair; }
 
 .guess-btn {
-    width: 100%;
-    padding: 15px;
-    background: var(--cyan);
-    color: var(--black);
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 20px;
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    border: none;
-    cursor: pointer;
-    transition: background 0.2s;
+    width: 100%; padding: 15px; background: var(--cyan); color: var(--black);
+    font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 900;
+    text-transform: uppercase; letter-spacing: 0.1em; border: none; cursor: pointer; transition: background 0.2s;
 }
-
 .guess-btn:hover:not(:disabled) { background: #90E0EF; }
 .guess-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
 
-/* ===== ECRAN DE RESULTAT ===== */
-.overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(10, 10, 10, 0.85);
-    z-index: 50;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+/* ===== MODE RESULTAT (Carte au centre) ===== */
+#map-wrapper.result-mode {
+    bottom: 50%; /* On remonte pour centrer */
+    right: 50%;
+    transform: translate(50%, 40%); /* Un peu au-dessus du centre pour laisser la place au score */
+    z-index: 60; /* Au-dessus du filtre sombre */
 }
 
-.hidden { display: none !important; }
+#map-wrapper.result-mode .map-hover-area {
+    width: 70vw; /* Beaucoup plus grand */
+    height: 55vh;
+    max-width: 900px;
+    opacity: 1;
+    border-color: var(--cyan);
+    pointer-events: none; /* Bloque les clics pendant la cinématique */
+}
 
+#map-wrapper.result-mode .guess-btn {
+    display: none; /* Cache le bouton quand on affiche la réponse */
+}
+
+/* ===== ECRAN SOMBRE ===== */
+.overlay {
+    position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(10, 10, 10, 0.85); z-index: 50;
+    transition: opacity 0.5s;
+}
+.hidden { opacity: 0; pointer-events: none; }
+
+/* ===== MODALE DE SCORE ===== */
 .result-modal {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 70;
     background: white;
-    padding: 40px;
+    padding: 20px 50px;
     border: 4px solid var(--black);
     border-bottom: 8px solid var(--cyan);
     text-align: center;
-    max-width: 500px;
-    width: 90%;
+    min-width: 450px;
+    transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.art-title { font-family: 'Clash Display', sans-serif; font-size: 48px; text-transform: uppercase; margin-bottom: 10px; }
-.distance-text { font-size: 20px; font-weight: 500; margin-bottom: 10px; }
+/* Animation d'apparition de la modale depuis le bas */
+.result-modal.hidden {
+    opacity: 0;
+    transform: translate(-50%, 50px);
+    pointer-events: none;
+}
+
+.art-title { font-family: 'Clash Display', sans-serif; font-size: 38px; text-transform: uppercase; margin-bottom: 5px; }
+.distance-text { font-size: 18px; font-weight: 500; margin-bottom: 5px; }
 .cyan-text { color: var(--cyan); font-weight: 700; }
-.score-num { font-family: 'Clash Display', sans-serif; font-size: 64px; font-weight: 700; color: var(--cyan); line-height: 1; margin-bottom: 30px; }
+.score-num { font-family: 'Clash Display', sans-serif; font-size: 56px; font-weight: 700; color: var(--cyan); line-height: 1; margin-bottom: 15px; }
 
-.hero-btn {
-    background: var(--black);
-    color: white;
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 18px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    padding: 15px 30px;
-    border: none;
-    cursor: pointer;
-    transition: background 0.2s;
+.waiting-text {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 15px;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--gray);
+    border-top: 1px solid #ddd; padding-top: 15px;
 }
-.hero-btn:hover { background: var(--cyan); color: var(--black); }
