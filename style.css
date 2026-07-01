@@ -1,149 +1,200 @@
-/* ===== FONTS ===== */
-@import url('https://api.fontshare.com/v2/css?f[]=clash-display@600,700&f[]=satoshi@400,500,700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&display=swap');
+// ==========================================
+// 1. CONFIGURATION (MODE DEV)
+// ==========================================
 
-/* ===== BASE ===== */
-:root {
-    --cyan: #00B4D8;
-    --black: #0A0A0A;
-    --offwhite: #F4F3EF;
+const allLocations = [
+    { id: 'Lieu1', x: 500, y: 500 }, // Remplacer par les vraies coordonées
+    { id: 'Lieu2', x: 500, y: 500 }, 
+    { id: 'Lieu3', x: 500, y: 500 },
+    { id: 'Lieu4', x: 500, y: 500 },
+    { id: 'Lieu5', x: 500, y: 500 },
+    { id: 'Lieu6', x: 500, y: 500 }
+];
+
+const maxScorePerRound = 5000;
+const totalRounds = allLocations.length; // On fait les 6 lieux à la suite !
+
+let currentRound = 1;
+let totalScore = 0;
+// 📍 MODE DEV : On ne mélange plus les lieux, on les garde dans l'ordre (1, 2, 3...)
+let gameLocations = allLocations; 
+let marker = null;
+let hasValidated = false;
+
+// ==========================================
+// 2. PRÉPARATION 360 (PANNELLUM)
+// ==========================================
+
+const pannellumScenes = {};
+allLocations.forEach(loc => {
+    pannellumScenes[loc.id] = {
+        "type": "cubemap",
+        "cubeMap": [
+            `panoramas/${loc.id}/panorama_0.png`,
+            `panoramas/${loc.id}/panorama_1.png`,
+            `panoramas/${loc.id}/panorama_2.png`,
+            `panoramas/${loc.id}/panorama_3.png`,
+            `panoramas/${loc.id}/panorama_4.png`,
+            `panoramas/${loc.id}/panorama_5.png`
+        ]
+    };
+});
+
+const viewer = pannellum.viewer('panorama', {
+    "default": {
+        "firstScene": gameLocations[0].id,
+        "autoLoad": true,
+        "showZoomCtrl": false,
+        "mouseZoom": true
+    },
+    "scenes": pannellumScenes
+});
+
+// ==========================================
+// 3. LA CARTE (LEAFLET)
+// ==========================================
+
+const bounds = [[0, 0], [1427, 1427]];
+
+const map = L.map('map', { 
+    crs: L.CRS.Simple, 
+    minZoom: -5, 
+    maxZoom: 4, 
+    zoomSnap: 0, 
+    zoomDelta: 0.5,
+    zoomControl: false, 
+    attributionControl: false,
+    maxBounds: bounds,         
+    maxBoundsViscosity: 1.0    
+});
+
+L.imageOverlay('maps/map.png', bounds).addTo(map);
+map.fitBounds(bounds);
+
+const gameLayer = L.layerGroup().addTo(map);
+
+const guessBtn = document.getElementById('guess-btn');
+const mapWrapper = document.getElementById('map-wrapper');
+const nextBtn = document.getElementById('next-btn');
+
+// Correction du redimensionnement fluide
+const resizeObserver = new ResizeObserver(() => {
+    map.invalidateSize({ pan: false });
+});
+resizeObserver.observe(document.getElementById('map-container'));
+
+document.getElementById('map-container').addEventListener('transitionend', function(e) {
+    if (e.target.id === 'map-container' && !hasValidated) {
+        map.fitBounds(bounds);
+    }
+});
+
+// ==========================================
+// 4. CLICS (SANS CHRONO)
+// ==========================================
+
+function startRound() {
+    hasValidated = false;
+    document.getElementById('timer-display').innerText = "DEV"; // Indique le mode sans temps
 }
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+function enableMapClick() {
+    map.on('click', function(e) {
+        if (hasValidated) return;
+        
+        // 🕵️‍♂️ OUTIL DÉVELOPPEUR : Note ces coordonnées dans ton code !
+        console.log("📍 Lieu " + currentRound + " -> targetY: " + e.latlng.lat + " | targetX: " + e.latlng.lng);
 
-body, html {
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden;
-    font-family: 'Satoshi', sans-serif;
-    background: var(--black);
+        if (marker !== null) gameLayer.removeLayer(marker);
+        marker = L.marker([e.latlng.lat, e.latlng.lng]).addTo(gameLayer);
+        
+        guessBtn.disabled = false;
+        guessBtn.innerText = "Valider !";
+    });
 }
 
-/* ===== 360 PANORAMA ===== */
-#panorama { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; }
+guessBtn.addEventListener('click', () => {
+    if(marker && !hasValidated) processRoundResult();
+});
 
-/* ===== UI EN HAUT ===== */
-.game-header {
-    position: absolute; top: 0; left: 0; width: 100%; z-index: 10;
-    display: flex; justify-content: space-between; align-items: flex-start;
-    padding: 20px 40px; background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%); pointer-events: none;
+// ==========================================
+// 5. RÉSULTAT
+// ==========================================
+
+function processRoundResult() {
+    hasValidated = true; 
+    map.off('click'); 
+    guessBtn.disabled = true;
+
+    const targetLocation = gameLocations[currentRound - 1];
+    let score = 0;
+    let distance = 0;
+    
+    const pointsToFit = [[targetLocation.y, targetLocation.x]];
+
+    if (marker !== null) {
+        const clickY = marker.getLatLng().lat;
+        const clickX = marker.getLatLng().lng;
+        pointsToFit.push([clickY, clickX]); 
+
+        distance = Math.sqrt(Math.pow(targetLocation.x - clickX, 2) + Math.pow(targetLocation.y - clickY, 2));
+        
+        score = Math.round(maxScorePerRound - (distance * 3.5)); 
+        if (score < 0) score = 0;
+
+        document.getElementById('distanceDisplay').innerText = Math.round(distance) + " blocs";
+        L.polyline([[clickY, clickX], [targetLocation.y, targetLocation.x]], {color: '#00B4D8', weight: 3, dashArray: '10, 10'}).addTo(gameLayer);
+    }
+
+    totalScore += score;
+    document.getElementById('scoreDisplay').innerText = score;
+    document.getElementById('header-score').innerText = totalScore;
+
+    L.circleMarker([targetLocation.y, targetLocation.x], {color: '#0A0A0A', fillColor: '#00B4D8', fillOpacity: 1, radius: 8}).addTo(gameLayer);
+
+    document.getElementById('result-overlay').classList.remove('hidden');
+    mapWrapper.classList.add('result-mode'); 
+
+    setTimeout(() => {
+        map.flyToBounds(pointsToFit, { padding: [60, 60], duration: 1.5 });
+
+        setTimeout(() => {
+            document.getElementById('result-modal').classList.remove('hidden');
+        }, 1500);
+    }, 500);
 }
 
-.logo { font-family: 'Clash Display', sans-serif; font-size: 32px; font-weight: 700; color: white; text-transform: uppercase; }
-.logo em { font-style: normal; color: var(--cyan); }
+// ==========================================
+// 6. BOUTON SUIVANT MANUEL
+// ==========================================
 
-.game-stats {
-    display: flex; gap: 20px; background: rgba(10, 10, 10, 0.8);
-    border: 2px solid var(--cyan); padding: 10px 20px; border-radius: 8px; pointer-events: auto;
-}
+nextBtn.addEventListener('click', () => {
+    if (currentRound >= totalRounds) {
+        alert("Bravo, tu as configuré tous tes lieux ! Regarde ta console F12 pour les coordonnées.");
+        location.reload(); 
+        return;
+    }
 
-.stat-box { display: flex; flex-direction: column; align-items: center; min-width: 60px; }
-.stat-label { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; color: #ccc; text-transform: uppercase; letter-spacing: 0.1em; }
-.stat-value { font-family: 'Clash Display', sans-serif; font-size: 24px; color: white; font-weight: 700; transition: color 0.3s; }
+    currentRound++;
+    document.getElementById('round-display').innerText = currentRound;
 
-.timer-warning { color: #ff4757 !important; animation: pulse 1s infinite; }
-@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+    gameLayer.clearLayers();
+    marker = null;
+    document.getElementById('result-overlay').classList.add('hidden');
+    document.getElementById('result-modal').classList.add('hidden');
+    mapWrapper.classList.remove('result-mode');
+    guessBtn.innerText = "Placer le point";
 
-/* ===== LA MINIMAP ===== */
-#map-wrapper {
-    position: absolute;
-    bottom: 30px;
-    right: 30px;
-    z-index: 10;
-    transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
-}
+    setTimeout(() => {
+        map.fitBounds(bounds);
+        
+        viewer.loadScene(gameLocations[currentRound - 1].id);
+        
+        enableMapClick();
+        startRound();
+    }, 500);
+});
 
-.map-hover-area {
-    width: 280px;  /* 📍 Largeur de base */
-    height: auto;  /* 📍 La hauteur s'adapte automatiquement */
-    background: var(--black);
-    border: 3px solid white;
-    border-radius: 12px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    opacity: 0.7;
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-}
-
-#map-wrapper:not(.result-mode) .map-hover-area:hover {
-    width: 480px; /* 📍 Largeur quand on passe la souris */
-    opacity: 1;
-    border-color: var(--cyan);
-}
-
-#map { 
-    width: 100%; 
-    aspect-ratio: 1 / 1; /* 📍 LE SECRET : Force la zone de carte à rester un carré parfait ! */
-    cursor: crosshair; 
-    background: var(--black) !important; 
-}
-
-.guess-btn {
-    width: 100%; padding: 15px; background: var(--cyan); color: var(--black);
-    font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 900;
-    text-transform: uppercase; letter-spacing: 0.1em; border: none; cursor: pointer; transition: background 0.2s;
-}
-.guess-btn:hover:not(:disabled) { background: #90E0EF; }
-.guess-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
-
-/* ===== MODE RESULTAT (Carte au centre) ===== */
-#map-wrapper.result-mode {
-    bottom: 50%;
-    right: 50%;
-    transform: translate(50%, 40%);
-    z-index: 60;
-}
-
-#map-wrapper.result-mode .map-hover-area {
-    width: 65vh; /* 📍 On utilise la hauteur (vh) pour être sûr que le carré rentre dans l'écran */
-    max-width: 800px;
-    height: auto;
-    opacity: 1;
-    border-color: var(--cyan);
-    pointer-events: none;
-}
-
-#map-wrapper.result-mode .guess-btn { display: none; }
-
-/* ===== ECRAN SOMBRE ===== */
-.overlay {
-    position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
-    background: rgba(10, 10, 10, 0.85); z-index: 50;
-    transition: opacity 0.5s;
-}
-.hidden { opacity: 0; pointer-events: none; }
-
-/* ===== MODALE DE SCORE ===== */
-.result-modal {
-    position: absolute;
-    bottom: 40px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 70;
-    background: white;
-    padding: 20px 50px;
-    border: 4px solid var(--black);
-    border-bottom: 8px solid var(--cyan);
-    text-align: center;
-    min-width: 450px;
-    transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.result-modal.hidden {
-    opacity: 0;
-    transform: translate(-50%, 50px);
-    pointer-events: none;
-}
-
-.art-title { font-family: 'Clash Display', sans-serif; font-size: 38px; text-transform: uppercase; margin-bottom: 5px; }
-.distance-text { font-size: 18px; font-weight: 500; margin-bottom: 5px; }
-.cyan-text { color: var(--cyan); font-weight: 700; }
-.score-num { font-family: 'Clash Display', sans-serif; font-size: 56px; font-weight: 700; color: var(--cyan); line-height: 1; margin-bottom: 15px; }
-
-.waiting-text {
-    font-family: 'Barlow Condensed', sans-serif; font-size: 15px;
-    letter-spacing: 0.1em; text-transform: uppercase; color: var(--gray);
-    border-top: 1px solid #ddd; padding-top: 15px;
-}
+// Démarrage initial
+enableMapClick();
+startRound();
