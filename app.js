@@ -13,7 +13,7 @@ const allLocations = [
 
 const maxScorePerRound = 5000;
 const totalRounds = 5;
-const roundTime = 30; // Temps d'un round en secondes
+const roundTime = 30; 
 
 let currentRound = 1;
 let totalScore = 0;
@@ -73,8 +73,10 @@ const bounds = [[0, 0], [1427, 1427]];
 
 const map = L.map('map', { 
     crs: L.CRS.Simple, 
-    minZoom: -2, 
+    minZoom: -5,               // 📍 On permet de dézoomer beaucoup plus
     maxZoom: 4, 
+    zoomSnap: 0,               // 📍 LE SECRET : Permet à la carte de remplir 100% de la boîte sans bandes noires !
+    zoomDelta: 0.5,            // Rend le zoom à la molette plus doux
     zoomControl: false, 
     attributionControl: false,
     maxBounds: bounds,         
@@ -91,12 +93,14 @@ const mapWrapper = document.getElementById('map-wrapper');
 const timerDisplay = document.getElementById('timer-display');
 const msgBox = document.getElementById('waiting-msg');
 
-// 📍 Fix Leaflet pour recalculer la carte après l'agrandissement CSS
-document.getElementById('map-container').addEventListener('transitionend', function() {
-    map.invalidateSize();
-    // On force la carte à se coller parfaitement aux bords carrés si on n'est pas en pleine animation
-    if (!hasValidated) {
-        map.fitBounds(bounds);
+// 📍 CORRECTION DU BUG DE LA MOLETTE
+document.getElementById('map-container').addEventListener('transitionend', function(e) {
+    // On vérifie que l'animation vient bien de la boîte (et pas des images de la carte pendant un zoom)
+    if (e.target.id === 'map-container') {
+        map.invalidateSize();
+        if (!hasValidated) {
+            map.fitBounds(bounds);
+        }
     }
 });
 
