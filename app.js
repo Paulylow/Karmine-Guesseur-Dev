@@ -108,16 +108,20 @@ document.getElementById('map-container').addEventListener('transitionend', funct
 // 4. ANIMATION DE ROUND & CHRONO
 // ==========================================
 
-// 📍 NOUVEAU : Fonction qui annonce le round et met le jeu en pause
 function announceRound() {
     const announcer = document.getElementById('round-announcer');
     const announcerText = document.getElementById('round-title-text');
     
+    // 📍 LA RUSE MAGIQUE EST ICI : On force le reset de l'animation CSS
+    announcerText.style.animation = 'none';
+    announcerText.offsetHeight; /* Déclenche un recalcul du navigateur */
+    announcerText.style.animation = null;
+
     // On met à jour le texte et on affiche l'écran noir
     announcerText.innerText = "ROUND " + currentRound;
     announcer.classList.remove('hidden');
     
-    // On bloque tout
+    // On bloque tout pendant l'annonce
     map.off('click');
     guessBtn.disabled = true;
     timerDisplay.innerText = roundTime;
@@ -126,7 +130,6 @@ function announceRound() {
     setTimeout(() => {
         announcer.classList.add('hidden');
         
-        // Petite sécurité pour s'assurer que Leaflet recalcule la carte après le chargement
         map.invalidateSize(); 
         map.fitBounds(bounds);
         
@@ -208,10 +211,10 @@ function processRoundResult() {
         const distance = Math.sqrt(Math.pow(targetLocation.x - clickX, 2) + Math.pow(targetLocation.y - clickY, 2));
         let displayDistance = Math.round(distance);
         
-        // 📍 CORRECTION DE L'ARRONDI : Marge de tolérance pour un 5000 parfait
+        // Marge de tolérance pour un 5000 parfait
         if (displayDistance <= 2) {
-            displayDistance = 0; // On affiche 0
-            score = maxScorePerRound; // On donne les 5000 points purs
+            displayDistance = 0; 
+            score = maxScorePerRound; 
         } else {
             score = Math.round(maxScorePerRound - (distance * 3.5)); 
             if (score < 0) score = 0;
@@ -295,13 +298,12 @@ function goToNextRound() {
     guessBtn.innerText = "Placer le point";
 
     setTimeout(() => {
-        // Charge le prochain paysage 360° discrètement derrière l'écran noir
         viewer.loadScene(gameLocations[currentRound - 1].id);
         
-        // Lance l'annonce du nouveau round
+        // Lance l'annonce avec l'animation rafraîchie !
         announceRound();
     }, 500);
 }
 
-// 📍 Lancement initial de la première partie !
+// Lancement initial
 announceRound();
