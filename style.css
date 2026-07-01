@@ -54,8 +54,8 @@ body, html {
 }
 
 .map-hover-area {
-    width: 280px;  /* 📍 Largeur de base */
-    height: auto;  /* 📍 La hauteur s'adapte automatiquement */
+    width: 280px;  
+    height: auto;  
     background: var(--black);
     border: 3px solid white;
     border-radius: 12px;
@@ -68,14 +68,14 @@ body, html {
 }
 
 #map-wrapper:not(.result-mode) .map-hover-area:hover {
-    width: 480px; /* 📍 Largeur quand on passe la souris */
+    width: 480px; 
     opacity: 1;
     border-color: var(--cyan);
 }
 
 #map { 
     width: 100%; 
-    aspect-ratio: 1 / 1; /* 📍 LE SECRET : Force la zone de carte à rester un carré parfait ! */
+    aspect-ratio: 1 / 1; 
     cursor: crosshair; 
     background: var(--black) !important; 
 }
@@ -97,7 +97,7 @@ body, html {
 }
 
 #map-wrapper.result-mode .map-hover-area {
-    width: 65vh; /* 📍 On utilise la hauteur (vh) pour être sûr que le carré rentre dans l'écran */
+    width: 65vh; 
     max-width: 800px;
     height: auto;
     opacity: 1;
@@ -146,4 +146,30 @@ body, html {
     font-family: 'Barlow Condensed', sans-serif; font-size: 15px;
     letter-spacing: 0.1em; text-transform: uppercase; color: var(--gray);
     border-top: 1px solid #ddd; padding-top: 15px;
+}
+
+/* ===== ANIMATION DE L'ANNONCE DU ROUND ===== */
+#round-announcer {
+    background: var(--black); /* Fond 100% noir pour cacher le chargement */
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.round-title {
+    font-family: 'Clash Display', sans-serif;
+    font-size: 120px;
+    color: var(--cyan);
+    text-transform: uppercase;
+    font-weight: 700;
+    /* L'animation joue sur l'opacité et le zoom */
+    animation: zoomInFade 2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes zoomInFade {
+    0% { transform: scale(0.5); opacity: 0; }
+    20% { transform: scale(1); opacity: 1; }
+    80% { transform: scale(1.1); opacity: 1; }
+    100% { transform: scale(1.5); opacity: 0; }
 }
