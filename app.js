@@ -1,9 +1,9 @@
 // ==========================================
-// 1. CONFIGURATION
+// 1. CONFIGURATION (MODE DEV)
 // ==========================================
 
 const allLocations = [
-    { id: 'Lieu1', x: 500, y: 500 }, // ⚠️ Remplacer par les vraies coordonées
+    { id: 'Lieu1', x: 500, y: 500 }, // Remplacer par les vraies coordonées
     { id: 'Lieu2', x: 500, y: 500 }, 
     { id: 'Lieu3', x: 500, y: 500 },
     { id: 'Lieu4', x: 500, y: 500 },
@@ -12,20 +12,14 @@ const allLocations = [
 ];
 
 const maxScorePerRound = 5000;
-const totalRounds = 5;
-const roundTime = 30; // Temps d'un round en secondes
+const totalRounds = allLocations.length; // On fait les 6 lieux à la suite !
 
 let currentRound = 1;
 let totalScore = 0;
-let gameLocations = []; 
+// 📍 MODE DEV : On ne mélange plus les lieux, on les garde dans l'ordre (1, 2, 3...)
+let gameLocations = allLocations; 
 let marker = null;
-
-let timerInterval;
-let waitInterval;
-let timeLeft = roundTime;
-let transitionTime = 5;
 let hasValidated = false;
-let isTransitioning = false;
 
 // ==========================================
 // 2. PRÉPARATION 360 (PANNELLUM)
@@ -45,15 +39,6 @@ allLocations.forEach(loc => {
         ]
     };
 });
-
-function shuffleArray(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-    }
-}
-shuffleArray(allLocations);
-gameLocations = allLocations.slice(0, totalRounds); 
 
 const viewer = pannellum.viewer('panorama', {
     "default": {
@@ -90,16 +75,14 @@ const gameLayer = L.layerGroup().addTo(map);
 
 const guessBtn = document.getElementById('guess-btn');
 const mapWrapper = document.getElementById('map-wrapper');
-const timerDisplay = document.getElementById('timer-display');
-const msgBox = document.getElementById('waiting-msg');
+const nextBtn = document.getElementById('next-btn');
 
-// 📍 LA CORRECTION EST ICI : Observe la taille en temps réel (Plus de noir !)
+// Correction du redimensionnement fluide
 const resizeObserver = new ResizeObserver(() => {
     map.invalidateSize({ pan: false });
 });
 resizeObserver.observe(document.getElementById('map-container'));
 
-// On remet la carte parfaitement centrée uniquement quand l'animation d'agrandissement est 100% finie
 document.getElementById('map-container').addEventListener('transitionend', function(e) {
     if (e.target.id === 'map-container' && !hasValidated) {
         map.fitBounds(bounds);
@@ -107,48 +90,20 @@ document.getElementById('map-container').addEventListener('transitionend', funct
 });
 
 // ==========================================
-// 4. CHRONO PRINCIPAL ET CLICS
+// 4. CLICS (SANS CHRONO)
 // ==========================================
 
-function startTimer() {
-    timeLeft = roundTime;
+function startRound() {
     hasValidated = false;
-    isTransitioning = false;
-    
-    timerDisplay.innerText = timeLeft;
-    timerDisplay.classList.remove('timer-warning');
-    
-    clearInterval(timerInterval);
-    timerInterval = setInterval(() => {
-        timeLeft--;
-        timerDisplay.innerText = timeLeft;
-        
-        if (timeLeft <= 5 && !hasValidated) {
-            timerDisplay.classList.add('timer-warning');
-        }
-
-        if (hasValidated && !isTransitioning) {
-            msgBox.innerHTML = `En attente des autres joueurs... (<span id="auto-next-timer">${timeLeft}</span>s)`;
-        }
-        
-        if (timeLeft <= 0) {
-            clearInterval(timerInterval);
-            timerDisplay.classList.remove('timer-warning');
-            
-            if (!hasValidated) {
-                processRoundResult(); 
-            } else {
-                startWaitingLobby(); 
-            }
-        }
-    }, 1000);
+    document.getElementById('timer-display').innerText = "DEV"; // Indique le mode sans temps
 }
 
 function enableMapClick() {
     map.on('click', function(e) {
         if (hasValidated) return;
         
-        console.log("Coordonnées -> targetY: " + e.latlng.lat + " | targetX: " + e.latlng.lng);
+        // 🕵️‍♂️ OUTIL DÉVELOPPEUR : Note ces coordonnées dans ton code !
+        console.log("📍 Lieu " + currentRound + " -> targetY: " + e.latlng.lat + " | targetX: " + e.latlng.lng);
 
         if (marker !== null) gameLayer.removeLayer(marker);
         marker = L.marker([e.latlng.lat, e.latlng.lng]).addTo(gameLayer);
@@ -163,14 +118,13 @@ guessBtn.addEventListener('click', () => {
 });
 
 // ==========================================
-// 5. CINÉMATIQUE DE RÉSULTAT
+// 5. RÉSULTAT
 // ==========================================
 
 function processRoundResult() {
     hasValidated = true; 
     map.off('click'); 
     guessBtn.disabled = true;
-    timerDisplay.classList.remove('timer-warning');
 
     const targetLocation = gameLocations[currentRound - 1];
     let score = 0;
@@ -190,8 +144,6 @@ function processRoundResult() {
 
         document.getElementById('distanceDisplay').innerText = Math.round(distance) + " blocs";
         L.polyline([[clickY, clickX], [targetLocation.y, targetLocation.x]], {color: '#00B4D8', weight: 3, dashArray: '10, 10'}).addTo(gameLayer);
-    } else {
-        document.getElementById('distanceDisplay').innerText = "Temps écoulé !";
     }
 
     totalScore += score;
@@ -208,49 +160,17 @@ function processRoundResult() {
 
         setTimeout(() => {
             document.getElementById('result-modal').classList.remove('hidden');
-
-            if (timeLeft <= 0) {
-                startWaitingLobby();
-            } else {
-                msgBox.innerHTML = `En attente des autres joueurs... (<span id="auto-next-timer">${timeLeft}</span>s)`;
-            }
         }, 1500);
     }, 500);
 }
 
 // ==========================================
-// 6. COMPTE À REBOURS DE TRANSITION (5s)
+// 6. BOUTON SUIVANT MANUEL
 // ==========================================
 
-function startWaitingLobby() {
-    if(isTransitioning) return;
-    isTransitioning = true;
-    transitionTime = 5;
-
-    function updateMsg() {
-        if (currentRound >= totalRounds) {
-            msgBox.innerHTML = `Partie terminée ! Fin dans <span id="auto-next-timer">${transitionTime}</span>s...`;
-        } else {
-            msgBox.innerHTML = `Prochain round dans <span id="auto-next-timer">${transitionTime}</span>s...`;
-        }
-    }
-    
-    updateMsg();
-
-    clearInterval(waitInterval);
-    waitInterval = setInterval(() => {
-        transitionTime--;
-        updateMsg();
-
-        if (transitionTime <= 0) {
-            clearInterval(waitInterval);
-            goToNextRound();
-        }
-    }, 1000);
-}
-
-function goToNextRound() {
+nextBtn.addEventListener('click', () => {
     if (currentRound >= totalRounds) {
+        alert("Bravo, tu as configuré tous tes lieux ! Regarde ta console F12 pour les coordonnées.");
         location.reload(); 
         return;
     }
@@ -271,10 +191,10 @@ function goToNextRound() {
         viewer.loadScene(gameLocations[currentRound - 1].id);
         
         enableMapClick();
-        startTimer();
+        startRound();
     }, 500);
-}
+});
 
 // Démarrage initial
 enableMapClick();
-startTimer();
+startRound();
