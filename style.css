@@ -1,4 +1,4 @@
-/* ===== FONTS (Ton identité visuelle) ===== */
+/* ===== FONTS ===== */
 @import url('https://api.fontshare.com/v2/css?f[]=clash-display@600,700&f[]=satoshi@400,500,700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&display=swap');
 
@@ -27,7 +27,7 @@ body, html {
     left: 0;
     width: 100vw;
     height: 100vh;
-    z-index: 1; /* Tout au fond */
+    z-index: 1;
 }
 
 /* ===== UI EN HAUT (Score & Titre) ===== */
@@ -42,7 +42,7 @@ body, html {
     align-items: flex-start;
     padding: 20px 40px;
     background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%);
-    pointer-events: none; /* Pour pouvoir cliquer à travers */
+    pointer-events: none;
 }
 
 .logo {
@@ -68,7 +68,7 @@ body, html {
 .stat-label { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; color: #ccc; text-transform: uppercase; letter-spacing: 0.1em; }
 .stat-value { font-family: 'Clash Display', sans-serif; font-size: 24px; color: white; font-weight: 700; }
 
-/* ===== LA MINIMAP (L'effet GeoGuessr) ===== */
+/* ===== LA MINIMAP ===== */
 #map-wrapper {
     position: absolute;
     bottom: 30px;
@@ -85,12 +85,11 @@ body, html {
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    opacity: 0.7; /* Légèrement transparent quand on ne la touche pas */
+    opacity: 0.7;
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 
-/* Quand la souris passe sur la carte, elle s'agrandit */
 .map-hover-area:hover, .map-hover-area.active {
     width: 550px;
     height: 400px;
@@ -99,7 +98,7 @@ body, html {
 }
 
 #map {
-    flex-grow: 1; /* La carte prend tout l'espace disponible */
+    flex-grow: 1;
     width: 100%;
     cursor: crosshair;
 }
