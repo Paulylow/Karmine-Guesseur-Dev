@@ -2,9 +2,10 @@
 // 1. CONFIGURATION
 // ==========================================
 
+// ⚠️ N'oublie pas de recalculer ces coordonnées avec F12 sur ta nouvelle carte 1427x1427 !
 const allLocations = [
-    { id: 'Lieu1', x: 665.5, y: 556.625 }, 
-    { id: 'Lieu2', x: 500, y: 500 }, // Mets tes vrais points ici avec la touche F12 !
+    { id: 'Lieu1', x: 500, y: 500 }, 
+    { id: 'Lieu2', x: 500, y: 500 }, 
     { id: 'Lieu3', x: 500, y: 500 },
     { id: 'Lieu4', x: 500, y: 500 },
     { id: 'Lieu5', x: 500, y: 500 },
@@ -25,8 +26,8 @@ let timerInterval;
 let waitInterval;
 let timeLeft = roundTime;
 let transitionTime = 5;
-let hasValidated = false;    // Le joueur a-t-il cliqué sur Valider ?
-let isTransitioning = false; // Sommes-nous dans les 5 secondes d'attente entre les rounds ?
+let hasValidated = false;
+let isTransitioning = false;
 
 // ==========================================
 // 2. PRÉPARATION 360 (PANNELLUM)
@@ -70,8 +71,12 @@ const viewer = pannellum.viewer('panorama', {
 // 3. LA CARTE (LEAFLET)
 // ==========================================
 
-const map = L.map('map', { crs: L.CRS.Simple, minZoom: -2, maxZoom: 3, zoomControl: false, attributionControl: false });
-const bounds = [[0, 0], [1000, 1000]];
+// maxZoom augmenté à 4 pour ta map HD
+const map = L.map('map', { crs: L.CRS.Simple, minZoom: -2, maxZoom: 4, zoomControl: false, attributionControl: false });
+
+// 📍 LA NOUVELLE TAILLE EXACTE DE TA CARTE 📍
+const bounds = [[0, 0], [1427, 1427]];
+
 L.imageOverlay('maps/map.png', bounds).addTo(map);
 map.fitBounds(bounds);
 
@@ -99,26 +104,21 @@ function startTimer() {
         timeLeft--;
         timerDisplay.innerText = timeLeft;
         
-        // Clignote en rouge s'il reste 5 secondes et qu'il n'a pas validé
         if (timeLeft <= 5 && !hasValidated) {
             timerDisplay.classList.add('timer-warning');
         }
 
-        // Si le joueur a déjà validé, on met à jour le texte du bas pour lui dire d'attendre les autres
         if (hasValidated && !isTransitioning) {
             msgBox.innerHTML = `En attente des autres joueurs... (<span id="auto-next-timer">${timeLeft}</span>s)`;
         }
         
-        // TEMPS ÉCOULÉ (Round fini pour tout le monde)
         if (timeLeft <= 0) {
             clearInterval(timerInterval);
             timerDisplay.classList.remove('timer-warning');
             
-            // Si le joueur n'avait pas cliqué, on force la validation
             if (!hasValidated) {
                 processRoundResult(); 
             } else {
-                // S'il avait déjà cliqué, on lance direct le passage au round suivant
                 startWaitingLobby(); 
             }
         }
@@ -127,8 +127,11 @@ function startTimer() {
 
 function enableMapClick() {
     map.on('click', function(e) {
-        if (hasValidated) return; // Sécurité pour empêcher de cliquer après validation
+        if (hasValidated) return;
         
+        // 🕵️‍♂️ OUTIL DÉVELOPPEUR 
+        console.log("Coordonnées -> targetY: " + e.latlng.lat + " | targetX: " + e.latlng.lng);
+
         if (marker !== null) gameLayer.removeLayer(marker);
         marker = L.marker([e.latlng.lat, e.latlng.lng]).addTo(gameLayer);
         
@@ -146,7 +149,7 @@ guessBtn.addEventListener('click', () => {
 // ==========================================
 
 function processRoundResult() {
-    hasValidated = true; // Verrouille le joueur
+    hasValidated = true; 
     map.off('click'); 
     guessBtn.disabled = true;
     timerDisplay.classList.remove('timer-warning');
@@ -155,16 +158,17 @@ function processRoundResult() {
     let score = 0;
     let distance = 0;
     
-    // On met le vrai point dans le tableau pour la caméra
     const pointsToFit = [[targetLocation.y, targetLocation.x]];
 
     if (marker !== null) {
         const clickY = marker.getLatLng().lat;
         const clickX = marker.getLatLng().lng;
-        pointsToFit.push([clickY, clickX]); // On ajoute le point du joueur pour la caméra
+        pointsToFit.push([clickY, clickX]); 
 
         distance = Math.sqrt(Math.pow(targetLocation.x - clickX, 2) + Math.pow(targetLocation.y - clickY, 2));
-        score = Math.round(maxScorePerRound - (distance * 5)); 
+        
+        // ⚖️ Ajustement de la difficulté (* 3.5 au lieu de 5 car la map va jusqu'à 1427)
+        score = Math.round(maxScorePerRound - (distance * 3.5)); 
         if (score < 0) score = 0;
 
         document.getElementById('distanceDisplay').innerText = Math.round(distance) + " blocs";
@@ -177,10 +181,8 @@ function processRoundResult() {
     document.getElementById('scoreDisplay').innerText = score;
     document.getElementById('header-score').innerText = totalScore;
 
-    // Place la vraie réponse
     L.circleMarker([targetLocation.y, targetLocation.x], {color: '#0A0A0A', fillColor: '#00B4D8', fillOpacity: 1, radius: 8}).addTo(gameLayer);
 
-    // 🎬 Lancement de l'animation
     document.getElementById('result-overlay').classList.remove('hidden');
     mapWrapper.classList.add('result-mode'); 
 
@@ -191,11 +193,9 @@ function processRoundResult() {
         setTimeout(() => {
             document.getElementById('result-modal').classList.remove('hidden');
 
-            // Si le chrono principal est déjà à zéro (Le joueur n'a pas eu le temps)
             if (timeLeft <= 0) {
                 startWaitingLobby();
             } else {
-                // Le joueur a été rapide, il doit attendre la fin du chrono des autres
                 msgBox.innerHTML = `En attente des autres joueurs... (<span id="auto-next-timer">${timeLeft}</span>s)`;
             }
         }, 1500);
@@ -207,7 +207,7 @@ function processRoundResult() {
 // ==========================================
 
 function startWaitingLobby() {
-    if(isTransitioning) return; // Sécurité
+    if(isTransitioning) return;
     isTransitioning = true;
     transitionTime = 5;
 
