@@ -8,7 +8,9 @@ if (typeof window.supabase === 'undefined') {
 // ==========================================
 const supabaseUrl = 'https://fokdgworzsmsjwqvocxb.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZva2Rnd29yenNtanN3cXZvY3hiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwMDQ5MDIsImV4cCI6MjA5ODU4MDkwMn0.TmFmdVYz4qh9FKgZdtOsHEUUT81Q0fQI38oMPTIX-ek';
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+// 📍 CORRECTION : On renomme en "supabaseClient" pour éviter le conflit de nom !
+const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 // ==========================================
 // 2. CONFIGURATION DES LIEUX
@@ -39,15 +41,13 @@ let players = [];
 // 3. GESTION DE LA CONNEXION & LOBBY (AVEC F5)
 // ==========================================
 
-// 📍 VÉRIFICATION SI DÉJÀ CONNECTÉ (F5)
 async function checkSession() {
     const savedUser = localStorage.getItem('kg_user');
     if (savedUser) {
         myPlayer = JSON.parse(savedUser);
         
-        // On vérifie à Supabase si la salle existe toujours
         if(myPlayer.room_code) {
-            let { data: room } = await supabase.from('rooms').select('*').eq('room_code', myPlayer.room_code).single();
+            let { data: room } = await supabaseClient.from('rooms').select('*').eq('room_code', myPlayer.room_code).single();
             if (room) {
                 currentRoom = room;
                 document.getElementById('display-room-code').innerText = room.room_code;
@@ -64,17 +64,14 @@ async function checkSession() {
                 
                 fetchPlayers();
                 
-                // Si la partie était déjà lancée, on rejoint direct le jeu
                 if (room.status === 'playing') launchGameUI();
                 return;
             }
         }
     }
-    // Si on n'est pas connecté ou salle introuvable, on affiche le menu normal
     document.getElementById('login-screen').classList.remove('hidden');
 }
 
-// BOUTON REJOINDRE
 document.getElementById('join-lobby-btn').addEventListener('click', async () => {
     const rpName = document.getElementById('rp-name').value.trim();
     const mcPseudo = document.getElementById('mc-pseudo').value.trim();
@@ -89,14 +86,12 @@ document.getElementById('join-lobby-btn').addEventListener('click', async () => 
     btn.disabled = true;
 
     try {
-        // 1. Chercher si la salle existe
-        let { data: room, error: searchError } = await supabase.from('rooms').select('*').eq('room_code', roomCode).single();
+        let { data: room, error: searchError } = await supabaseClient.from('rooms').select('*').eq('room_code', roomCode).single();
         let isHost = false;
         
-        // 2. Si elle n'existe pas, on la crée (On devient l'Hôte)
         if (!room) {
-            const { data: newRoom, error: createError } = await supabase.from('rooms').insert([{ room_code: roomCode, status: 'waiting' }]).select().single();
-            if (createError) throw new Error("Impossible de créer la salle. As-tu désactivé le RLS dans Supabase ?");
+            const { data: newRoom, error: createError } = await supabaseClient.from('rooms').insert([{ room_code: roomCode, status: 'waiting' }]).select().single();
+            if (createError) throw new Error("Impossible de créer la salle. As-tu bien exécuté la requête SQL pour désactiver le RLS dans Supabase ?");
             room = newRoom;
             isHost = true;
         }
@@ -104,21 +99,18 @@ document.getElementById('join-lobby-btn').addEventListener('click', async () => 
         currentRoom = room;
         document.getElementById('display-room-code').innerText = room.room_code;
 
-        // 3. Créer le joueur dans la BDD
-        const { data: player, error: playerError } = await supabase.from('players').insert([{ 
+        const { data: player, error: playerError } = await supabaseClient.from('players').insert([{ 
             room_id: room.id, rp_name: rpName, mc_pseudo: mcPseudo, is_host: isHost 
         }]).select().single();
 
-        if (playerError) throw new Error("Impossible d'ajouter le joueur.");
+        if (playerError) throw new Error("Impossible d'ajouter le joueur à la BDD.");
 
         myPlayer = player;
-        myPlayer.room_code = roomCode; // On sauvegarde le code pour le F5 !
+        myPlayer.room_code = roomCode; 
         localStorage.setItem('kg_user', JSON.stringify(myPlayer));
         
-        // 4. Activer le multijoueur temps réel
         setupRealtimeSubscriptions();
 
-        // 5. Afficher le Lobby
         document.getElementById('login-screen').classList.add('hidden');
         document.getElementById('lobby-screen').classList.remove('hidden');
         
@@ -137,9 +129,8 @@ document.getElementById('join-lobby-btn').addEventListener('click', async () => 
     }
 });
 
-// QUITTER
 document.getElementById('disconnect-btn').addEventListener('click', async () => {
-    if (myPlayer) await supabase.from('players').delete().eq('id', myPlayer.id);
+    if (myPlayer) await supabaseClient.from('players').delete().eq('id', myPlayer.id);
     localStorage.removeItem('kg_user');
     location.reload();
 });
@@ -149,14 +140,12 @@ document.getElementById('disconnect-btn').addEventListener('click', async () => 
 // ==========================================
 
 function setupRealtimeSubscriptions() {
-    // Écouter l'arrivée des joueurs
-    supabase.channel('players_channel')
+    supabaseClient.channel('players_channel')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'players', filter: `room_id=eq.${currentRoom.id}` }, payload => {
             fetchPlayers();
         }).subscribe();
 
-    // Écouter si l'hôte lance la partie
-    supabase.channel('rooms_channel')
+    supabaseClient.channel('rooms_channel')
         .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `id=eq.${currentRoom.id}` }, payload => {
             currentRoom = payload.new;
             if (currentRoom.status === 'playing' && document.getElementById('game-screen').classList.contains('hidden')) {
@@ -166,7 +155,7 @@ function setupRealtimeSubscriptions() {
 }
 
 async function fetchPlayers() {
-    const { data } = await supabase.from('players').select('*').eq('room_id', currentRoom.id).order('score', { ascending: false });
+    const { data } = await supabaseClient.from('players').select('*').eq('room_id', currentRoom.id).order('score', { ascending: false });
     players = data || [];
     updateLobbyUI();
     updateLeaderboardDisplay();
@@ -210,8 +199,7 @@ document.getElementById('start-game-btn').addEventListener('click', async () => 
     totalRounds = parseInt(document.getElementById('setting-rounds').value);
     roundTime = parseInt(document.getElementById('setting-time').value);
     
-    // L'hôte prévient Supabase (qui va prévenir les autres)
-    await supabase.from('rooms').update({ status: 'playing', total_rounds: totalRounds, round_time: roundTime }).eq('id', currentRoom.id);
+    await supabaseClient.from('rooms').update({ status: 'playing', total_rounds: totalRounds, round_time: roundTime }).eq('id', currentRoom.id);
 });
 
 function launchGameUI() {
@@ -366,7 +354,7 @@ async function processRoundResult() {
 
     // ENVOI DU SCORE À SUPABASE (MAJ BDD)
     const currentDBScore = players.find(p => p.id === myPlayer.id).score;
-    await supabase.from('players').update({ score: currentDBScore + myScore }).eq('id', myPlayer.id);
+    await supabaseClient.from('players').update({ score: currentDBScore + myScore }).eq('id', myPlayer.id);
 
     document.getElementById('scoreDisplay').innerText = myScore;
     L.circleMarker([targetLocation.y, targetLocation.x], {color: '#0A0A0A', fillColor: '#00B4D8', fillOpacity: 1, radius: 8}).addTo(gameLayer);
@@ -416,7 +404,6 @@ function updateLeaderboardDisplay() {
             </div>`;
     }
     
-    // Met aussi à jour ton score total en haut
     if (players.length > 0 && myPlayer) {
         const me = players.find(p => p.id === myPlayer.id);
         if(me) document.getElementById('header-score').innerText = me.score;
@@ -494,8 +481,8 @@ function showPodium() {
 }
 
 document.getElementById('return-lobby-btn').addEventListener('click', async () => {
-    if (myPlayer.is_host) await supabase.from('rooms').delete().eq('id', currentRoom.id);
-    else await supabase.from('players').delete().eq('id', myPlayer.id);
+    if (myPlayer.is_host) await supabaseClient.from('rooms').delete().eq('id', currentRoom.id);
+    else await supabaseClient.from('players').delete().eq('id', myPlayer.id);
     localStorage.removeItem('kg_user');
     location.reload();
 });
