@@ -1,38 +1,153 @@
 // ==========================================
-// 1. CONFIGURATION (BASE DE DONNÉES FINALE)
+// 1. CONFIGURATION DES LIEUX
 // ==========================================
 
 const allLocations = [
-    { id: 'Lieu1', x: 634.0625, y: 809.5625 },
-    { id: 'Lieu2', x: 377.5, y: 779.4375 }, 
-    { id: 'Lieu3', x: 496.375, y: 992.4375 },
-    { id: 'Lieu4', x: 293.06264472481286, y: 958.6056737754375 },
-    { id: 'Lieu5', x: 505.5625, y: 730.3125 },
-    { id: 'Lieu6', x: 273.3125, y: 912.1875 },
-    { id: 'Lieu7', x: 930.6405894730218, y: 841.7385479362847 },
-    { id: 'Lieu8', x: 944.4112590713203, y: 630.8679668762923 },
-    { id: 'Lieu9', x: 1047.249507588725, y: 551.226798181108 },
-    { id: 'Lieu10', x: 1072.8678913777107, y: 601.7731135589685 },
-    { id: 'Lieu11', x: 1019.6200190354904, y: 582.2998689750975 },
-    { id: 'Lieu12', x: 1037.2179155741558, y: 152.22015514203198 },
-    { id: 'Lieu13', x: 875.5116584116552, y: 375.5173030727776 },
-    { id: 'Lieu14', x: 878.4948340752787, y: 431.1085119913018 },
-    { id: 'Lieu15', x: 728.6828241093921, y: 428.20462478819366 },
-    // On skip le 16 !
-    { id: 'Lieu17', x: 631.5622699443798, y: 327.5529679698231 },
-    { id: 'Lieu18', x: 482.4032682804576, y: 230.4027768947771 },
-    { id: 'Lieu19', x: 662.6477195672688, y: 100.57379001605248 }
+    { id: 'Lieu1', x: 634.0625, y: 809.5625 }, { id: 'Lieu2', x: 377.5, y: 779.4375 }, 
+    { id: 'Lieu3', x: 496.375, y: 992.4375 }, { id: 'Lieu4', x: 293.06264472481286, y: 958.6056737754375 },
+    { id: 'Lieu5', x: 505.5625, y: 730.3125 }, { id: 'Lieu6', x: 273.3125, y: 912.1875 },
+    { id: 'Lieu7', x: 930.6405894730218, y: 841.7385479362847 }, { id: 'Lieu8', x: 944.4112590713203, y: 630.8679668762923 },
+    { id: 'Lieu9', x: 1047.249507588725, y: 551.226798181108 }, { id: 'Lieu10', x: 1072.8678913777107, y: 601.7731135589685 },
+    { id: 'Lieu11', x: 1019.6200190354904, y: 582.2998689750975 }, { id: 'Lieu12', x: 1037.2179155741558, y: 152.22015514203198 },
+    { id: 'Lieu13', x: 875.5116584116552, y: 375.5173030727776 }, { id: 'Lieu14', x: 878.4948340752787, y: 431.1085119913018 },
+    { id: 'Lieu15', x: 728.6828241093921, y: 428.20462478819366 }, { id: 'Lieu17', x: 631.5622699443798, y: 327.5529679698231 },
+    { id: 'Lieu18', x: 482.4032682804576, y: 230.4027768947771 }, { id: 'Lieu19', x: 662.6477195672688, y: 100.57379001605248 }
 ];
 
 const maxScorePerRound = 5000;
-const totalRounds = 5; // On tire 5 lieux au hasard par partie
-const roundTime = 30; // 30 secondes pour trouver
+let totalRounds = 5;  // Choisi par l'hôte
+let roundTime = 30;   // Choisi par l'hôte
+
+// ==========================================
+// 2. GESTION DE LA SESSION JOUEUR (LOCALSTORAGE)
+// ==========================================
+
+let myPlayer = null;
+let players = []; // La liste de tous les joueurs du lobby
+
+// Vérifie si le joueur est déjà connecté
+function checkSession() {
+    const savedUser = localStorage.getItem('kg_user');
+    if (savedUser) {
+        myPlayer = JSON.parse(savedUser);
+        joinLobby(myPlayer);
+    } else {
+        // Affiche l'écran de login
+        document.getElementById('login-screen').classList.remove('hidden');
+    }
+}
+
+// Bouton pour se connecter
+document.getElementById('join-lobby-btn').addEventListener('click', () => {
+    const rpName = document.getElementById('rp-name').value.trim();
+    const mcPseudo = document.getElementById('mc-pseudo').value.trim();
+
+    if (rpName === "" || mcPseudo === "") {
+        alert("Merci de remplir ton Nom RP et ton Pseudo Minecraft !");
+        return;
+    }
+
+    // Création de l'objet Joueur
+    myPlayer = {
+        rpName: rpName,
+        mcPseudo: mcPseudo,
+        score: 0,
+        isHost: true // Pour le test, on dit que tu es toujours l'hôte
+    };
+
+    // Sauvegarde pour éviter les déconnexions
+    localStorage.setItem('kg_user', JSON.stringify(myPlayer));
+    joinLobby(myPlayer);
+});
+
+// Bouton de déconnexion volontaire
+document.getElementById('disconnect-btn').addEventListener('click', () => {
+    localStorage.removeItem('kg_user');
+    location.reload();
+});
+
+// ==========================================
+// 3. LOGIQUE DU LOBBY ET AFFICHAGE
+// ==========================================
+
+function joinLobby(user) {
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('lobby-screen').classList.remove('hidden');
+
+    // On simule une liste de joueurs (Bientôt remplacé par la vraie BDD Supabase)
+    players = [
+        { ...user, isMe: true }, // Toi
+        { rpName: 'Kotei', mcPseudo: 'Kotei', score: 0, isMe: false, isHost: false },
+        { rpName: 'Fatiiiih', mcPseudo: 'Fatih', score: 0, isMe: false, isHost: false }
+    ];
+
+    updateLobbyUI();
+}
+
+function updateLobbyUI() {
+    const lobbyPlayersDiv = document.getElementById('lobby-players');
+    lobbyPlayersDiv.innerHTML = '';
+    
+    players.forEach(p => {
+        // Utilisation de l'API Minotar pour récupérer la tête
+        const avatarUrl = `https://minotar.net/helm/${p.mcPseudo}/100.png`;
+        
+        lobbyPlayersDiv.innerHTML += `
+            <div class="player-item ${p.isMe ? 'is-me' : ''}">
+                <img src="${avatarUrl}" class="mc-head" alt="${p.mcPseudo}" onerror="this.src='https://minotar.net/helm/Steve/100.png'">
+                <div class="player-info">
+                    <span class="player-rpname">${p.rpName}</span>
+                    <span class="player-pseudo">@${p.mcPseudo}</span>
+                </div>
+                ${p.isHost ? '<span class="host-crown">👑</span>' : '<span style="color:#00e676; font-size:12px;">Prêt</span>'}
+            </div>
+        `;
+    });
+
+    // Affichage des contrôles si on est l'hôte
+    if (myPlayer.isHost) {
+        document.getElementById('host-settings').classList.remove('hidden');
+        document.getElementById('waiting-host-msg').classList.add('hidden');
+    } else {
+        document.getElementById('host-settings').classList.add('hidden');
+        document.getElementById('waiting-host-msg').classList.remove('hidden');
+    }
+}
+
+// LANCEMENT DE LA PARTIE
+document.getElementById('start-game-btn').addEventListener('click', () => {
+    // Récupération des paramètres de l'hôte
+    totalRounds = parseInt(document.getElementById('setting-rounds').value);
+    roundTime = parseInt(document.getElementById('setting-time').value);
+    
+    document.getElementById('total-round-display').innerText = totalRounds;
+
+    document.getElementById('lobby-screen').classList.add('hidden');
+    document.getElementById('game-screen').classList.remove('hidden');
+    
+    shuffleArray(allLocations);
+    gameLocations = allLocations.slice(0, totalRounds); 
+    
+    setTimeout(() => {
+        map.invalidateSize();
+        map.fitBounds(bounds);
+        viewer.loadScene(gameLocations[0].id);
+        updateLeaderboardDisplay(); 
+        announceRound();
+    }, 500);
+});
+
+// Lancement au chargement de la page
+checkSession();
+
+
+// ==========================================
+// LE RESTE DU JEU (Reste Identique)
+// ==========================================
 
 let currentRound = 1;
-let totalScore = 0;
 let gameLocations = []; 
 let marker = null;
-
 let timerInterval;
 let waitInterval;
 let timeLeft = roundTime;
@@ -40,66 +155,33 @@ let transitionTime = 5;
 let hasValidated = false;
 let isTransitioning = false;
 
-// ==========================================
-// 2. PRÉPARATION 360 (PANNELLUM)
-// ==========================================
-
 const pannellumScenes = {};
 allLocations.forEach(loc => {
     pannellumScenes[loc.id] = {
         "type": "cubemap",
         "cubeMap": [
-            `panoramas/${loc.id}/panorama_0.png`,
-            `panoramas/${loc.id}/panorama_1.png`,
-            `panoramas/${loc.id}/panorama_2.png`,
-            `panoramas/${loc.id}/panorama_3.png`,
-            `panoramas/${loc.id}/panorama_4.png`,
-            `panoramas/${loc.id}/panorama_5.png`
+            `panoramas/${loc.id}/panorama_0.png`, `panoramas/${loc.id}/panorama_1.png`,
+            `panoramas/${loc.id}/panorama_2.png`, `panoramas/${loc.id}/panorama_3.png`,
+            `panoramas/${loc.id}/panorama_4.png`, `panoramas/${loc.id}/panorama_5.png`
         ]
     };
 });
 
-// Mélange des lieux pour chaque nouvelle partie !
 function shuffleArray(array) {
     for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [array[i], array[j]] = [array[j], array[i]];
     }
 }
-shuffleArray(allLocations);
-gameLocations = allLocations.slice(0, totalRounds); 
 
 const viewer = pannellum.viewer('panorama', {
-    "default": {
-        "firstScene": gameLocations[0].id,
-        "autoLoad": true,
-        "showZoomCtrl": false,
-        "mouseZoom": true
-    },
+    "default": { "firstScene": allLocations[0].id, "autoLoad": true, "showZoomCtrl": false, "mouseZoom": true },
     "scenes": pannellumScenes
 });
 
-// ==========================================
-// 3. LA CARTE (LEAFLET)
-// ==========================================
-
 const bounds = [[0, 0], [1427, 1427]];
-
-const map = L.map('map', { 
-    crs: L.CRS.Simple, 
-    minZoom: -5, 
-    maxZoom: 4, 
-    zoomSnap: 0, 
-    zoomDelta: 0.5,
-    zoomControl: false, 
-    attributionControl: false,
-    maxBounds: bounds,         
-    maxBoundsViscosity: 1.0    
-});
-
+const map = L.map('map', { crs: L.CRS.Simple, minZoom: -5, maxZoom: 4, zoomSnap: 0, zoomDelta: 0.5, zoomControl: false, attributionControl: false, maxBounds: bounds, maxBoundsViscosity: 1.0 });
 L.imageOverlay('maps/map.png', bounds).addTo(map);
-map.fitBounds(bounds);
-
 const gameLayer = L.layerGroup().addTo(map);
 
 const guessBtn = document.getElementById('guess-btn');
@@ -107,23 +189,13 @@ const mapWrapper = document.getElementById('map-wrapper');
 const timerDisplay = document.getElementById('timer-display');
 const msgBox = document.getElementById('waiting-msg');
 
-// 📍 C'est ici que la magie opère ! On garde uniquement l'observer 
-// pour la fluidité, mais on a retiré le code qui forçait la carte à se remettre à zéro au survol.
-const resizeObserver = new ResizeObserver(() => {
-    map.invalidateSize({ pan: false });
-});
+const resizeObserver = new ResizeObserver(() => { map.invalidateSize({ pan: false }); });
 resizeObserver.observe(document.getElementById('map-container'));
-
-
-// ==========================================
-// 4. ANIMATION DE ROUND & CHRONO
-// ==========================================
 
 function announceRound() {
     const announcer = document.getElementById('round-announcer');
     const announcerText = document.getElementById('round-title-text');
     
-    // Reset l'animation CSS
     announcerText.style.animation = 'none';
     announcerText.offsetHeight; 
     announcerText.style.animation = null;
@@ -137,10 +209,8 @@ function announceRound() {
     
     setTimeout(() => {
         announcer.classList.add('hidden');
-        
         map.invalidateSize(); 
-        map.fitBounds(bounds); // La carte se remet à zéro SEULEMENT au début du round !
-        
+        map.fitBounds(bounds);
         enableMapClick();
         startTimer();
     }, 2000);
@@ -159,23 +229,14 @@ function startTimer() {
         timeLeft--;
         timerDisplay.innerText = timeLeft;
         
-        if (timeLeft <= 5 && !hasValidated) {
-            timerDisplay.classList.add('timer-warning');
-        }
-
-        if (hasValidated && !isTransitioning) {
-            msgBox.innerHTML = `En attente des autres joueurs... (<span id="auto-next-timer">${timeLeft}</span>s)`;
-        }
+        if (timeLeft <= 5 && !hasValidated) timerDisplay.classList.add('timer-warning');
+        if (hasValidated && !isTransitioning) msgBox.innerHTML = `En attente des autres joueurs... (<span id="auto-next-timer">${timeLeft}</span>s)`;
         
         if (timeLeft <= 0) {
             clearInterval(timerInterval);
             timerDisplay.classList.remove('timer-warning');
-            
-            if (!hasValidated) {
-                processRoundResult(); 
-            } else {
-                startWaitingLobby(); 
-            }
+            if (!hasValidated) processRoundResult(); 
+            else startWaitingLobby(); 
         }
     }, 1000);
 }
@@ -183,22 +244,14 @@ function startTimer() {
 function enableMapClick() {
     map.on('click', function(e) {
         if (hasValidated) return;
-        
         if (marker !== null) gameLayer.removeLayer(marker);
         marker = L.marker([e.latlng.lat, e.latlng.lng]).addTo(gameLayer);
-        
         guessBtn.disabled = false;
         guessBtn.innerText = "Valider !";
     });
 }
 
-guessBtn.addEventListener('click', () => {
-    if(marker && !hasValidated) processRoundResult();
-});
-
-// ==========================================
-// 5. CINÉMATIQUE DE RÉSULTAT ET SCORE
-// ==========================================
+guessBtn.addEventListener('click', () => { if(marker && !hasValidated) processRoundResult(); });
 
 function processRoundResult() {
     hasValidated = true; 
@@ -207,8 +260,7 @@ function processRoundResult() {
     timerDisplay.classList.remove('timer-warning');
 
     const targetLocation = gameLocations[currentRound - 1];
-    let score = 0;
-    
+    let myScore = 0;
     const pointsToFit = [[targetLocation.y, targetLocation.x]];
 
     if (marker !== null) {
@@ -219,13 +271,8 @@ function processRoundResult() {
         const distance = Math.sqrt(Math.pow(targetLocation.x - clickX, 2) + Math.pow(targetLocation.y - clickY, 2));
         let displayDistance = Math.round(distance);
         
-        if (displayDistance <= 2) {
-            displayDistance = 0; 
-            score = maxScorePerRound; 
-        } else {
-            score = Math.round(maxScorePerRound - (distance * 3.5)); 
-            if (score < 0) score = 0;
-        }
+        if (displayDistance <= 2) { displayDistance = 0; myScore = maxScorePerRound; } 
+        else { myScore = Math.round(maxScorePerRound - (distance * 3.5)); if (myScore < 0) myScore = 0; }
 
         document.getElementById('distanceDisplay').innerText = displayDistance + " blocs";
         L.polyline([[clickY, clickX], [targetLocation.y, targetLocation.x]], {color: '#00B4D8', weight: 3, dashArray: '10, 10'}).addTo(gameLayer);
@@ -233,33 +280,46 @@ function processRoundResult() {
         document.getElementById('distanceDisplay').innerText = "Temps écoulé !";
     }
 
-    totalScore += score;
-    document.getElementById('scoreDisplay').innerText = score;
-    document.getElementById('header-score').innerText = totalScore;
+    // MISE À JOUR MULTIJOUEUR
+    players.forEach(p => {
+        if (p.isMe) p.score += myScore;
+        else p.score += Math.floor(Math.random() * 3900) + 1000; // Simulation des bots
+    });
 
+    players.sort((a, b) => b.score - a.score);
+    updateLeaderboardDisplay();
+
+    document.getElementById('scoreDisplay').innerText = myScore;
+    document.getElementById('header-score').innerText = players.find(p => p.isMe).score; // Met à jour le score du header
+    
     L.circleMarker([targetLocation.y, targetLocation.x], {color: '#0A0A0A', fillColor: '#00B4D8', fillOpacity: 1, radius: 8}).addTo(gameLayer);
-
     document.getElementById('result-overlay').classList.remove('hidden');
     mapWrapper.classList.add('result-mode'); 
 
     setTimeout(() => {
         map.flyToBounds(pointsToFit, { padding: [60, 60], duration: 1.5 });
-
         setTimeout(() => {
             document.getElementById('result-modal').classList.remove('hidden');
-
-            if (timeLeft <= 0) {
-                startWaitingLobby();
-            } else {
-                msgBox.innerHTML = `En attente des autres joueurs... (<span id="auto-next-timer">${timeLeft}</span>s)`;
-            }
+            if (timeLeft <= 0) startWaitingLobby();
+            else msgBox.innerHTML = `En attente des autres joueurs... (<span id="auto-next-timer">${timeLeft}</span>s)`;
         }, 1500);
     }, 500);
 }
 
-// ==========================================
-// 6. COMPTE À REBOURS DE TRANSITION (5s)
-// ==========================================
+function updateLeaderboardDisplay() {
+    const lbContent = document.getElementById('leaderboard-content');
+    lbContent.innerHTML = '';
+    
+    for (let i = 0; i < 3 && i < players.length; i++) {
+        const p = players[i];
+        lbContent.innerHTML += `<div class="lb-row ${p.isMe ? 'me' : ''}"><span>#${i+1} ${p.rpName}</span> <span>${p.score}</span></div>`;
+    }
+
+    const myIndex = players.findIndex(p => p.isMe);
+    if (myIndex >= 3) {
+        lbContent.innerHTML += `<div class="lb-row divider me"><span>#${myIndex+1} ${players[myIndex].rpName}</span> <span>${players[myIndex].score}</span></div>`;
+    }
+}
 
 function startWaitingLobby() {
     if(isTransitioning) return;
@@ -267,13 +327,9 @@ function startWaitingLobby() {
     transitionTime = 5;
 
     function updateMsg() {
-        if (currentRound >= totalRounds) {
-            msgBox.innerHTML = `Partie terminée ! Fin dans <span id="auto-next-timer">${transitionTime}</span>s...`;
-        } else {
-            msgBox.innerHTML = `Prochain round dans <span id="auto-next-timer">${transitionTime}</span>s...`;
-        }
+        if (currentRound >= totalRounds) msgBox.innerHTML = `Partie terminée ! Résultats dans <span id="auto-next-timer">${transitionTime}</span>s...`;
+        else msgBox.innerHTML = `Prochain round dans <span id="auto-next-timer">${transitionTime}</span>s...`;
     }
-    
     updateMsg();
 
     clearInterval(waitInterval);
@@ -283,17 +339,13 @@ function startWaitingLobby() {
 
         if (transitionTime <= 0) {
             clearInterval(waitInterval);
-            goToNextRound();
+            if (currentRound >= totalRounds) showPodium();
+            else goToNextRound();
         }
     }, 1000);
 }
 
 function goToNextRound() {
-    if (currentRound >= totalRounds) {
-        location.reload(); 
-        return;
-    }
-
     currentRound++;
     document.getElementById('round-display').innerText = currentRound;
 
@@ -310,5 +362,31 @@ function goToNextRound() {
     }, 500);
 }
 
-// Lancement initial
-announceRound();
+function showPodium() {
+    document.getElementById('game-screen').classList.add('hidden');
+    document.getElementById('podium-screen').classList.remove('hidden');
+    
+    const podiumContent = document.getElementById('podium-content');
+    
+    const p1 = players[0];
+    const p2 = players[1];
+    const p3 = players[2];
+
+    podiumContent.innerHTML = `
+        <div class="podium-step second">
+            <img src="https://minotar.net/helm/${p2.mcPseudo}/50.png" class="mc-head" style="margin-bottom:10px;">
+            <div class="podium-name">${p2 ? p2.rpName : ''}</div>
+            <div class="podium-score">${p2 ? p2.score : ''}</div>
+        </div>
+        <div class="podium-step first">
+            <img src="https://minotar.net/helm/${p1.mcPseudo}/50.png" class="mc-head" style="margin-bottom:10px; border-color: #FFD700;">
+            <div class="podium-name" style="font-size: 22px;">👑 ${p1.rpName}</div>
+            <div class="podium-score">${p1.score}</div>
+        </div>
+        <div class="podium-step third">
+            <img src="https://minotar.net/helm/${p3.mcPseudo}/50.png" class="mc-head" style="margin-bottom:10px;">
+            <div class="podium-name">${p3 ? p3.rpName : ''}</div>
+            <div class="podium-score">${p3 ? p3.score : ''}</div>
+        </div>
+    `;
+}
