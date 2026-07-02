@@ -1,4 +1,3 @@
-// Vérification de sécurité pour éviter le crash silencieux
 if (typeof window.supabase === 'undefined') {
     alert("⚠️ Erreur Critique : Supabase n'est pas chargé ! Vérifie ton fichier index.html.");
 }
@@ -8,8 +7,6 @@ if (typeof window.supabase === 'undefined') {
 // ==========================================
 const supabaseUrl = 'https://fokdgworzsmsjwqvocxb.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZva2Rnd29yenNtanN3cXZvY3hiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwMDQ5MDIsImV4cCI6MjA5ODU4MDkwMn0.TmFmdVYz4qh9FKgZdtOsHEUUT81Q0fQI38oMPTIX-ek';
-
-// 📍 CORRECTION : On renomme en "supabaseClient" pour éviter le conflit de nom !
 const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 // ==========================================
@@ -90,8 +87,14 @@ document.getElementById('join-lobby-btn').addEventListener('click', async () => 
         let isHost = false;
         
         if (!room) {
+            // 📍 NOUVELLE GESTION D'ERREUR PLUS PRÉCISE
             const { data: newRoom, error: createError } = await supabaseClient.from('rooms').insert([{ room_code: roomCode, status: 'waiting' }]).select().single();
-            if (createError) throw new Error("Impossible de créer la salle. As-tu bien exécuté la requête SQL pour désactiver le RLS dans Supabase ?");
+            
+            if (createError) {
+                console.error("Erreur Supabase lors de la création de la salle :", createError);
+                throw new Error("Erreur BDD : " + createError.message);
+            }
+            
             room = newRoom;
             isHost = true;
         }
@@ -103,7 +106,10 @@ document.getElementById('join-lobby-btn').addEventListener('click', async () => 
             room_id: room.id, rp_name: rpName, mc_pseudo: mcPseudo, is_host: isHost 
         }]).select().single();
 
-        if (playerError) throw new Error("Impossible d'ajouter le joueur à la BDD.");
+        if (playerError) {
+            console.error("Erreur Supabase lors de l'ajout du joueur :", playerError);
+            throw new Error("Impossible d'ajouter le joueur : " + playerError.message);
+        }
 
         myPlayer = player;
         myPlayer.room_code = roomCode; 
@@ -123,7 +129,8 @@ document.getElementById('join-lobby-btn').addEventListener('click', async () => 
 
     } catch (err) {
         console.error("Erreur détaillée:", err);
-        alert("❌ Erreur : " + err.message);
+        // On affiche l'erreur exacte renvoyée par Supabase
+        alert("❌ Oups ! " + err.message);
         btn.innerText = "Rejoindre le Lobby";
         btn.disabled = false;
     }
