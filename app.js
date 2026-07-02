@@ -5,7 +5,7 @@ if (typeof window.supabase === 'undefined') {
 // ==========================================
 // 1. INITIALISATION SUPABASE
 // ==========================================
-const supabaseUrl = 'https://fokdgworzsmsjwqvocxb.supabase.co';
+const supabaseUrl = 'https://fokdgworzsmjswqvocxb.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZva2Rnd29yenNtanN3cXZvY3hiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwMDQ5MDIsImV4cCI6MjA5ODU4MDkwMn0.TmFmdVYz4qh9FKgZdtOsHEUUT81Q0fQI38oMPTIX-ek';
 const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
