@@ -29,8 +29,17 @@ body, html {
     padding: 20px 40px; background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%); pointer-events: none;
 }
 
-.logo { font-family: 'Clash Display', sans-serif; font-size: 32px; font-weight: 700; color: white; text-transform: uppercase; }
-.logo em { font-style: normal; color: var(--cyan); }
+/* 📍 NOUVEAU STYLE POUR L'IMAGE DU LOGO */
+.logo { 
+    display: flex;
+    align-items: center;
+}
+.logo img {
+    height: 55px; /* Tu peux modifier cette valeur pour le faire plus grand ou plus petit */
+    width: auto;
+    filter: drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.5)); /* Petite ombre portée */
+    pointer-events: auto; /* Permet de cliquer dessus si besoin plus tard */
+}
 
 .game-stats {
     display: flex; gap: 20px; background: rgba(10, 10, 10, 0.8);
@@ -150,7 +159,7 @@ body, html {
 
 /* ===== ANIMATION DE L'ANNONCE DU ROUND ===== */
 #round-announcer {
-    background: var(--black); /* Fond 100% noir pour cacher le chargement */
+    background: var(--black);
     z-index: 100;
     display: flex;
     justify-content: center;
@@ -163,7 +172,6 @@ body, html {
     color: var(--cyan);
     text-transform: uppercase;
     font-weight: 700;
-    /* L'animation joue sur l'opacité et le zoom */
     animation: zoomInFade 2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
