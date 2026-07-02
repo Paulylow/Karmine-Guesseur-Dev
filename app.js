@@ -57,10 +57,15 @@ function joinLobby(user) {
     document.getElementById('login-screen').classList.add('hidden');
     document.getElementById('lobby-screen').classList.remove('hidden');
 
+    // On rajoute plus de joueurs pour bien tester le Top 5
     players = [
         { ...user, isMe: true }, 
         { rpName: 'Kotei', mcPseudo: 'Kotei', score: 0, isMe: false, isHost: false },
-        { rpName: 'Fatiiiih', mcPseudo: 'Fatih', score: 0, isMe: false, isHost: false }
+        { rpName: 'Fatiiiih', mcPseudo: 'Fatih', score: 0, isMe: false, isHost: false },
+        { rpName: 'Kameto', mcPseudo: 'Kameto', score: 0, isMe: false, isHost: false },
+        { rpName: 'Etoiles', mcPseudo: 'Etoiles', score: 0, isMe: false, isHost: false },
+        { rpName: 'Bichou', mcPseudo: 'Bichouu', score: 0, isMe: false, isHost: false },
+        { rpName: 'Tiky', mcPseudo: 'Tiky', score: 0, isMe: false, isHost: false }
     ];
     updateLobbyUI();
 }
@@ -98,6 +103,9 @@ document.getElementById('start-game-btn').addEventListener('click', () => {
     
     document.getElementById('total-round-display').innerText = totalRounds;
     document.getElementById('lobby-screen').classList.add('hidden');
+    
+    // 📍 On cache le fond animé pendant qu'on joue !
+    document.getElementById('animated-bg').classList.add('hidden');
     document.getElementById('game-screen').classList.remove('hidden');
     
     shuffleArray(allLocations);
@@ -105,8 +113,6 @@ document.getElementById('start-game-btn').addEventListener('click', () => {
     
     setTimeout(() => {
         map.invalidateSize();
-        map.fitBounds(bounds);
-        map.setMinZoom(map.getBoundsZoom(bounds)); // 📍 BLOQUE LE DEZOOM
         updateLeaderboardDisplay(); 
         announceRound();
     }, 500);
@@ -150,7 +156,8 @@ const viewer = pannellum.viewer('panorama', {
 });
 
 const bounds = [[0, 0], [1427, 1427]];
-// 📍 On retire la limite hardcodée de minZoom (-5) pour la rendre dynamique
+
+// 📍 Initialisation de la carte SANS minZoom hardcodé, on le gère mathématiquement
 const map = L.map('map', { 
     crs: L.CRS.Simple, maxZoom: 4, zoomSnap: 0, zoomDelta: 0.5, 
     zoomControl: false, attributionControl: false, 
@@ -164,12 +171,19 @@ const mapWrapper = document.getElementById('map-wrapper');
 const timerDisplay = document.getElementById('timer-display');
 const msgBox = document.getElementById('waiting-msg');
 
-// 📍 LE SECRET POUR ÉVITER LES BORDS NOIRS : Recalculer le zoom minimum au survol !
 const resizeObserver = new ResizeObserver(() => { 
     map.invalidateSize({ pan: false }); 
-    map.setMinZoom(map.getBoundsZoom(bounds));
 });
 resizeObserver.observe(document.getElementById('map-container'));
+
+// 📍 LA FONCTION MAGIQUE POUR LE ZOOM PARFAIT
+function resetMapZoom() {
+    // Largeur de la boite au survol (480px)
+    // On calcule le zoom pour que les 1427px de la map rentrent pile dans 480px
+    const optimalZoom = Math.log2(480 / 1427); 
+    map.setMinZoom(optimalZoom);
+    map.setView([713.5, 713.5], optimalZoom);
+}
 
 // ==========================================
 // 5. ANIMATION DE ROUND & CHRONO
@@ -193,7 +207,10 @@ function announceRound() {
     setTimeout(() => {
         announcer.classList.add('hidden');
         map.invalidateSize(); 
-        map.fitBounds(bounds);
+        
+        // 📍 On applique le zoom et on centre la carte parfaitement !
+        resetMapZoom();
+        
         enableMapClick();
         startTimer();
     }, 2000);
@@ -237,7 +254,7 @@ function enableMapClick() {
 guessBtn.addEventListener('click', () => { if(marker && !hasValidated) processRoundResult(); });
 
 // ==========================================
-// 6. RÉSULTATS ET LEADERBOARD (Têtes ajoutées)
+// 6. RÉSULTATS ET LEADERBOARD TOP 5
 // ==========================================
 
 function processRoundResult() {
@@ -281,7 +298,6 @@ function processRoundResult() {
     document.getElementById('result-overlay').classList.remove('hidden');
     mapWrapper.classList.add('result-mode'); 
 
-    // 📍 CORRECTION ANIMATION LIGNE : Il manquait l'invalidateSize ICI !
     setTimeout(() => {
         map.invalidateSize(); 
         map.flyToBounds(pointsToFit, { padding: [60, 60], duration: 1.5 });
@@ -297,7 +313,8 @@ function updateLeaderboardDisplay() {
     const lbContent = document.getElementById('leaderboard-content');
     lbContent.innerHTML = '';
     
-    for (let i = 0; i < 3 && i < players.length; i++) {
+    // 📍 Affichage du Top 5
+    for (let i = 0; i < 5 && i < players.length; i++) {
         const p = players[i];
         lbContent.innerHTML += `
             <div class="lb-row ${p.isMe ? 'me' : ''}">
@@ -310,8 +327,9 @@ function updateLeaderboardDisplay() {
             </div>`;
     }
 
+    // 📍 Si le joueur n'est pas dans le Top 5, on l'affiche en dessous
     const myIndex = players.findIndex(p => p.isMe);
-    if (myIndex >= 3) {
+    if (myIndex >= 5) {
         const myP = players[myIndex];
         lbContent.innerHTML += `
             <div class="lb-row divider me">
@@ -371,6 +389,8 @@ function goToNextRound() {
 }
 
 function showPodium() {
+    // 📍 On réaffiche le fond animé pour le Podium !
+    document.getElementById('animated-bg').classList.remove('hidden');
     document.getElementById('game-screen').classList.add('hidden');
     document.getElementById('podium-screen').classList.remove('hidden');
     
