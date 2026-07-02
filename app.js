@@ -15,72 +15,53 @@ const allLocations = [
 ];
 
 const maxScorePerRound = 5000;
-let totalRounds = 5;  // Choisi par l'hôte
-let roundTime = 30;   // Choisi par l'hôte
+let totalRounds = 5; 
+let roundTime = 30; 
 
 // ==========================================
-// 2. GESTION DE LA SESSION JOUEUR (LOCALSTORAGE)
+// 2. GESTION DE LA SESSION JOUEUR
 // ==========================================
 
 let myPlayer = null;
-let players = []; // La liste de tous les joueurs du lobby
+let players = []; 
 
-// Vérifie si le joueur est déjà connecté
 function checkSession() {
     const savedUser = localStorage.getItem('kg_user');
     if (savedUser) {
         myPlayer = JSON.parse(savedUser);
         joinLobby(myPlayer);
     } else {
-        // Affiche l'écran de login
         document.getElementById('login-screen').classList.remove('hidden');
     }
 }
 
-// Bouton pour se connecter
 document.getElementById('join-lobby-btn').addEventListener('click', () => {
     const rpName = document.getElementById('rp-name').value.trim();
     const mcPseudo = document.getElementById('mc-pseudo').value.trim();
-
-    if (rpName === "" || mcPseudo === "") {
-        alert("Merci de remplir ton Nom RP et ton Pseudo Minecraft !");
-        return;
-    }
-
-    // Création de l'objet Joueur
-    myPlayer = {
-        rpName: rpName,
-        mcPseudo: mcPseudo,
-        score: 0,
-        isHost: true // Pour le test, on dit que tu es toujours l'hôte
-    };
-
-    // Sauvegarde pour éviter les déconnexions
+    if (rpName === "" || mcPseudo === "") { alert("Merci de remplir ton Nom RP et ton Pseudo Minecraft !"); return; }
+    myPlayer = { rpName: rpName, mcPseudo: mcPseudo, score: 0, isHost: true };
     localStorage.setItem('kg_user', JSON.stringify(myPlayer));
     joinLobby(myPlayer);
 });
 
-// Bouton de déconnexion volontaire
 document.getElementById('disconnect-btn').addEventListener('click', () => {
     localStorage.removeItem('kg_user');
     location.reload();
 });
 
 // ==========================================
-// 3. LOGIQUE DU LOBBY ET AFFICHAGE
+// 3. LOGIQUE DU LOBBY
 // ==========================================
 
 function joinLobby(user) {
     document.getElementById('login-screen').classList.add('hidden');
     document.getElementById('lobby-screen').classList.remove('hidden');
 
-    // On simule une liste de joueurs (Bientôt remplacé par la vraie BDD Supabase)
     players = [
-        { ...user, isMe: true }, // Toi
+        { ...user, isMe: true }, 
         { rpName: 'Kotei', mcPseudo: 'Kotei', score: 0, isMe: false, isHost: false },
         { rpName: 'Fatiiiih', mcPseudo: 'Fatih', score: 0, isMe: false, isHost: false }
     ];
-
     updateLobbyUI();
 }
 
@@ -89,9 +70,7 @@ function updateLobbyUI() {
     lobbyPlayersDiv.innerHTML = '';
     
     players.forEach(p => {
-        // Utilisation de l'API Minotar pour récupérer la tête
         const avatarUrl = `https://minotar.net/helm/${p.mcPseudo}/100.png`;
-        
         lobbyPlayersDiv.innerHTML += `
             <div class="player-item ${p.isMe ? 'is-me' : ''}">
                 <img src="${avatarUrl}" class="mc-head" alt="${p.mcPseudo}" onerror="this.src='https://minotar.net/helm/Steve/100.png'">
@@ -99,12 +78,11 @@ function updateLobbyUI() {
                     <span class="player-rpname">${p.rpName}</span>
                     <span class="player-pseudo">@${p.mcPseudo}</span>
                 </div>
-                ${p.isHost ? '<span class="host-crown">👑</span>' : '<span style="color:#00e676; font-size:12px;">Prêt</span>'}
+                ${p.isHost ? '<span class="host-crown">👑</span>' : '<span style="color:#00e676; font-size:12px; font-weight:700; text-transform:uppercase;">Prêt</span>'}
             </div>
         `;
     });
 
-    // Affichage des contrôles si on est l'hôte
     if (myPlayer.isHost) {
         document.getElementById('host-settings').classList.remove('hidden');
         document.getElementById('waiting-host-msg').classList.add('hidden');
@@ -114,14 +92,11 @@ function updateLobbyUI() {
     }
 }
 
-// LANCEMENT DE LA PARTIE
 document.getElementById('start-game-btn').addEventListener('click', () => {
-    // Récupération des paramètres de l'hôte
     totalRounds = parseInt(document.getElementById('setting-rounds').value);
     roundTime = parseInt(document.getElementById('setting-time').value);
     
     document.getElementById('total-round-display').innerText = totalRounds;
-
     document.getElementById('lobby-screen').classList.add('hidden');
     document.getElementById('game-screen').classList.remove('hidden');
     
@@ -131,29 +106,24 @@ document.getElementById('start-game-btn').addEventListener('click', () => {
     setTimeout(() => {
         map.invalidateSize();
         map.fitBounds(bounds);
-        viewer.loadScene(gameLocations[0].id);
+        map.setMinZoom(map.getBoundsZoom(bounds)); // 📍 BLOQUE LE DEZOOM
         updateLeaderboardDisplay(); 
         announceRound();
     }, 500);
 });
 
-// Lancement au chargement de la page
 checkSession();
 
-
 // ==========================================
-// LE RESTE DU JEU (Reste Identique)
+// 4. PRÉPARATION 360 & CARTE LEAFLET
 // ==========================================
 
 let currentRound = 1;
-let gameLocations = []; 
 let marker = null;
-let timerInterval;
-let waitInterval;
+let timerInterval, waitInterval;
 let timeLeft = roundTime;
 let transitionTime = 5;
-let hasValidated = false;
-let isTransitioning = false;
+let hasValidated = false, isTransitioning = false;
 
 const pannellumScenes = {};
 allLocations.forEach(loc => {
@@ -180,7 +150,12 @@ const viewer = pannellum.viewer('panorama', {
 });
 
 const bounds = [[0, 0], [1427, 1427]];
-const map = L.map('map', { crs: L.CRS.Simple, minZoom: -5, maxZoom: 4, zoomSnap: 0, zoomDelta: 0.5, zoomControl: false, attributionControl: false, maxBounds: bounds, maxBoundsViscosity: 1.0 });
+// 📍 On retire la limite hardcodée de minZoom (-5) pour la rendre dynamique
+const map = L.map('map', { 
+    crs: L.CRS.Simple, maxZoom: 4, zoomSnap: 0, zoomDelta: 0.5, 
+    zoomControl: false, attributionControl: false, 
+    maxBounds: bounds, maxBoundsViscosity: 1.0 
+});
 L.imageOverlay('maps/map.png', bounds).addTo(map);
 const gameLayer = L.layerGroup().addTo(map);
 
@@ -189,8 +164,16 @@ const mapWrapper = document.getElementById('map-wrapper');
 const timerDisplay = document.getElementById('timer-display');
 const msgBox = document.getElementById('waiting-msg');
 
-const resizeObserver = new ResizeObserver(() => { map.invalidateSize({ pan: false }); });
+// 📍 LE SECRET POUR ÉVITER LES BORDS NOIRS : Recalculer le zoom minimum au survol !
+const resizeObserver = new ResizeObserver(() => { 
+    map.invalidateSize({ pan: false }); 
+    map.setMinZoom(map.getBoundsZoom(bounds));
+});
 resizeObserver.observe(document.getElementById('map-container'));
+
+// ==========================================
+// 5. ANIMATION DE ROUND & CHRONO
+// ==========================================
 
 function announceRound() {
     const announcer = document.getElementById('round-announcer');
@@ -253,6 +236,10 @@ function enableMapClick() {
 
 guessBtn.addEventListener('click', () => { if(marker && !hasValidated) processRoundResult(); });
 
+// ==========================================
+// 6. RÉSULTATS ET LEADERBOARD (Têtes ajoutées)
+// ==========================================
+
 function processRoundResult() {
     hasValidated = true; 
     map.off('click'); 
@@ -280,23 +267,23 @@ function processRoundResult() {
         document.getElementById('distanceDisplay').innerText = "Temps écoulé !";
     }
 
-    // MISE À JOUR MULTIJOUEUR
     players.forEach(p => {
         if (p.isMe) p.score += myScore;
-        else p.score += Math.floor(Math.random() * 3900) + 1000; // Simulation des bots
+        else p.score += Math.floor(Math.random() * 3900) + 1000;
     });
 
     players.sort((a, b) => b.score - a.score);
     updateLeaderboardDisplay();
 
     document.getElementById('scoreDisplay').innerText = myScore;
-    document.getElementById('header-score').innerText = players.find(p => p.isMe).score; // Met à jour le score du header
-    
     L.circleMarker([targetLocation.y, targetLocation.x], {color: '#0A0A0A', fillColor: '#00B4D8', fillOpacity: 1, radius: 8}).addTo(gameLayer);
+    
     document.getElementById('result-overlay').classList.remove('hidden');
     mapWrapper.classList.add('result-mode'); 
 
+    // 📍 CORRECTION ANIMATION LIGNE : Il manquait l'invalidateSize ICI !
     setTimeout(() => {
+        map.invalidateSize(); 
         map.flyToBounds(pointsToFit, { padding: [60, 60], duration: 1.5 });
         setTimeout(() => {
             document.getElementById('result-modal').classList.remove('hidden');
@@ -312,14 +299,35 @@ function updateLeaderboardDisplay() {
     
     for (let i = 0; i < 3 && i < players.length; i++) {
         const p = players[i];
-        lbContent.innerHTML += `<div class="lb-row ${p.isMe ? 'me' : ''}"><span>#${i+1} ${p.rpName}</span> <span>${p.score}</span></div>`;
+        lbContent.innerHTML += `
+            <div class="lb-row ${p.isMe ? 'me' : ''}">
+                <div style="display:flex; align-items:center;">
+                    <span style="width: 20px; font-size: 13px;">#${i+1}</span>
+                    <img src="https://minotar.net/helm/${p.mcPseudo}/30.png" class="lb-head" onerror="this.src='https://minotar.net/helm/Steve/30.png'">
+                    <span>${p.rpName}</span>
+                </div>
+                <span>${p.score}</span>
+            </div>`;
     }
 
     const myIndex = players.findIndex(p => p.isMe);
     if (myIndex >= 3) {
-        lbContent.innerHTML += `<div class="lb-row divider me"><span>#${myIndex+1} ${players[myIndex].rpName}</span> <span>${players[myIndex].score}</span></div>`;
+        const myP = players[myIndex];
+        lbContent.innerHTML += `
+            <div class="lb-row divider me">
+                <div style="display:flex; align-items:center;">
+                    <span style="width: 20px; font-size: 13px;">#${myIndex+1}</span>
+                    <img src="https://minotar.net/helm/${myP.mcPseudo}/30.png" class="lb-head" onerror="this.src='https://minotar.net/helm/Steve/30.png'">
+                    <span>${myP.rpName}</span>
+                </div>
+                <span>${myP.score}</span>
+            </div>`;
     }
 }
+
+// ==========================================
+// 7. TRANSITION & PODIUM
+// ==========================================
 
 function startWaitingLobby() {
     if(isTransitioning) return;
@@ -367,10 +375,7 @@ function showPodium() {
     document.getElementById('podium-screen').classList.remove('hidden');
     
     const podiumContent = document.getElementById('podium-content');
-    
-    const p1 = players[0];
-    const p2 = players[1];
-    const p3 = players[2];
+    const p1 = players[0]; const p2 = players[1]; const p3 = players[2];
 
     podiumContent.innerHTML = `
         <div class="podium-step second">
