@@ -6,83 +6,58 @@
     <title>KarmineGuesser</title>
     
     <link rel="icon" type="image/png" href="logo.png">
+    
     <link rel="stylesheet" href="style.css">
+    
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css">
     <script src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"></script>
+    
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
 
-    <div id="lobby-screen" class="screen active">
-        <div class="lobby-container">
-            <img src="logo.png" alt="Logo" class="lobby-logo">
-            <h1 class="lobby-title">SALLE D'ATTENTE</h1>
-            
-            <div class="players-list" id="lobby-players">
-                </div>
-            
-            <p class="lobby-info">Tu es l'hôte de la partie.</p>
-            <button id="start-game-btn" class="guess-btn">Lancer la partie</button>
+    <header class="game-header">
+        <div class="logo">
+            <img src="logo.png" alt="Karmine Guesser Logo">
+        </div>
+        
+        <div class="game-stats">
+            <div class="stat-box">
+                <span class="stat-label">Temps</span>
+                <span class="stat-value" id="timer-display">30</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">Lieu</span>
+                <span class="stat-value"><span id="round-display">1</span>/5</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">Score</span>
+                <span class="stat-value" id="header-score">0</span>
+            </div>
+        </div>
+    </header>
+
+    <div id="panorama"></div>
+
+    <div id="map-wrapper">
+        <div class="map-hover-area" id="map-container">
+            <div id="map"></div>
+            <button id="guess-btn" class="guess-btn" disabled>Placer le point</button>
         </div>
     </div>
 
-    <div id="game-screen" class="screen hidden">
-        <header class="game-header">
-            <div class="logo">
-                <img src="logo.png" alt="Karmine Guesser Logo">
-            </div>
-            <div class="game-stats">
-                <div class="stat-box">
-                    <span class="stat-label">Temps</span>
-                    <span class="stat-value" id="timer-display">30</span>
-                </div>
-                <div class="stat-box">
-                    <span class="stat-label">Lieu</span>
-                    <span class="stat-value"><span id="round-display">1</span>/5</span>
-                </div>
-            </div>
-        </header>
-
-        <div id="live-leaderboard" class="live-leaderboard">
-            <div class="leaderboard-title">CLASSEMENT</div>
-            <div id="leaderboard-content">
-                </div>
-        </div>
-
-        <div id="panorama"></div>
-
-        <div id="map-wrapper">
-            <div class="map-hover-area" id="map-container">
-                <div id="map"></div>
-                <button id="guess-btn" class="guess-btn" disabled>Placer le point</button>
-            </div>
-        </div>
-
-        <div id="round-announcer" class="overlay hidden">
-            <h1 class="round-title" id="round-title-text">ROUND 1</h1>
-        </div>
-
-        <div id="result-overlay" class="overlay hidden"></div>
-
-        <div id="result-modal" class="result-modal hidden">
-            <h2 class="art-title">Résultat</h2>
-            <p class="distance-text">Distance : <span id="distanceDisplay" class="cyan-text">0</span></p>
-            <p class="score-num">+<span id="scoreDisplay">0</span> pts</p>
-            <p class="waiting-text" id="waiting-msg">En attente des autres joueurs...</p>
-        </div>
+    <div id="round-announcer" class="overlay hidden">
+        <h1 class="round-title" id="round-title-text">ROUND 1</h1>
     </div>
 
-    <div id="podium-screen" class="screen hidden">
-        <div class="podium-container">
-            <img src="logo.png" alt="Logo" class="lobby-logo" style="margin-bottom: 20px;">
-            <h1 class="lobby-title" style="color: var(--cyan);">FIN DE LA PARTIE</h1>
-            
-            <div class="podium" id="podium-content">
-                </div>
-            
-            <button id="return-lobby-btn" class="guess-btn" style="max-width: 300px; margin-top: 40px;">Retour au Lobby</button>
-        </div>
+    <div id="result-overlay" class="overlay hidden"></div>
+
+    <div id="result-modal" class="result-modal hidden">
+        <h2 class="art-title">Résultat</h2>
+        <p class="distance-text">Distance : <span id="distanceDisplay" class="cyan-text">0</span></p>
+        <p class="score-num">+<span id="scoreDisplay">0</span> pts</p>
+        <p class="waiting-text" id="waiting-msg">Calcul en cours...</p>
     </div>
 
     <script src="app.js"></script>
