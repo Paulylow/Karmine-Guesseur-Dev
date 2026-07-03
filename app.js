@@ -38,15 +38,12 @@ let players = [];
 // 3. AIGUILLEUR D'ÉCRANS
 // ==========================================
 function switchScreen(targetId) {
-    // On cache tous les écrans
     ['login-screen', 'lobby-screen', 'game-ui', 'podium-screen'].forEach(id => {
         document.getElementById(id).classList.add('hidden-screen');
     });
     
-    // On affiche l'écran demandé
     document.getElementById(targetId).classList.remove('hidden-screen');
 
-    // On gère le fond blanc animé
     if (targetId === 'game-ui') {
         document.getElementById('animated-bg').classList.add('hidden-screen');
     } else {
@@ -257,10 +254,18 @@ function launchRoundUI(roundNum) {
     seededShuffle(allLocations, currentRoom.room_code);
     gameLocations = allLocations.slice(0, totalRounds); 
     
+    viewer.resize(); 
     viewer.loadScene(gameLocations[currentRound - 1].id);
     
     const announcer = document.getElementById('round-announcer');
-    document.getElementById('round-title-text').innerText = "ROUND " + currentRound;
+    const announcerText = document.getElementById('round-title-text');
+    announcerText.innerText = "ROUND " + currentRound;
+    
+    // 📍 FORCE LA RELANCE DE L'ANIMATION DU TEXTE "ROUND" !
+    announcerText.style.animation = 'none';
+    void announcerText.offsetWidth; // Magie JS : force le navigateur à recalculer l'image
+    announcerText.style.animation = 'zoomInFade 2s cubic-bezier(0.25, 1, 0.5, 1) forwards';
+    
     announcer.classList.remove('hidden');
     map.off('click');
     
@@ -290,21 +295,24 @@ function syncGameFromDB(room) {
 
     switchScreen('game-ui');
 
-    viewer.loadScene(gameLocations[currentRound - 1].id);
-    map.invalidateSize(); resetMapZoom();
+    setTimeout(() => {
+        viewer.resize(); 
+        viewer.loadScene(gameLocations[currentRound - 1].id);
+        map.invalidateSize(); resetMapZoom();
 
-    const remainingMs = currentRoom.round_end_time - Date.now();
-    if (remainingMs > 0) {
-        enableMapClick();
-        startTimerDB();
-    } else {
-        document.getElementById('distanceDisplay').innerText = "Temps écoulé !";
-        document.getElementById('result-overlay').classList.remove('hidden');
-        document.getElementById('result-modal').classList.remove('hidden');
-        mapWrapper.classList.add('result-mode');
-        hasValidated = true;
-        startWaitingLobby();
-    }
+        const remainingMs = currentRoom.round_end_time - Date.now();
+        if (remainingMs > 0) {
+            enableMapClick();
+            startTimerDB();
+        } else {
+            document.getElementById('distanceDisplay').innerText = "Temps écoulé !";
+            document.getElementById('result-overlay').classList.remove('hidden');
+            document.getElementById('result-modal').classList.remove('hidden');
+            mapWrapper.classList.add('result-mode');
+            hasValidated = true;
+            startWaitingLobby();
+        }
+    }, 100);
 }
 
 // ==========================================
