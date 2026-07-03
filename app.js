@@ -35,53 +35,74 @@ let currentRoom = null;
 let players = []; 
 
 // ==========================================
-// 3. GESTION DE LA CONNEXION (ET DU F5)
+// 3. SUPER CONTRÔLEUR D'ÉCRANS (La solution antibug)
+// ==========================================
+function hideAllScreens() {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('lobby-screen').style.display = 'none';
+    document.getElementById('game-screen').style.display = 'none';
+    document.getElementById('podium-screen').style.display = 'none';
+    document.getElementById('animated-bg').style.display = 'none';
+}
+
+function showScreen(screenId, useFlex = false) {
+    hideAllScreens();
+    if(screenId !== 'game-screen') {
+        document.getElementById('animated-bg').style.display = 'block';
+    }
+    document.getElementById(screenId).style.display = useFlex ? 'flex' : 'block';
+}
+
+// ==========================================
+// 4. GESTION DE LA CONNEXION (ET DU F5)
 // ==========================================
 
 async function checkSession() {
-    const savedUser = localStorage.getItem('kg_user');
-    if (savedUser) {
-        myPlayer = JSON.parse(savedUser);
-        
-        if(myPlayer.room_code) {
-            let { data: room } = await supabaseClient.from('rooms').select('*').eq('room_code', myPlayer.room_code).single();
-            if (room) {
-                currentRoom = room;
-                document.getElementById('display-room-code').innerText = room.room_code;
-                
-                let { data: existingPlayer } = await supabaseClient.from('players').select('*').eq('id', myPlayer.id).single();
-                if (!existingPlayer) {
-                    const { data: newP } = await supabaseClient.from('players').insert([{ room_id: room.id, rp_name: myPlayer.rp_name, mc_pseudo: myPlayer.mc_pseudo, is_host: myPlayer.is_host, score: myPlayer.score }]).select().single();
-                    myPlayer = newP;
-                    myPlayer.room_code = room.room_code;
-                    localStorage.setItem('kg_user', JSON.stringify(myPlayer));
-                }
-                
-                setupRealtimeSubscriptions();
-                fetchPlayers();
-                
-                if (room.status === 'playing') {
-                    // 📍 FIX : On cache de force le menu de connexion avant de resynchroniser
-                    document.getElementById('login-screen').classList.add('hidden');
-                    syncGameFromDB(room);
-                    return; 
-                }
+    try {
+        const savedUser = localStorage.getItem('kg_user');
+        if (savedUser) {
+            myPlayer = JSON.parse(savedUser);
+            
+            if(myPlayer.room_code) {
+                let { data: room } = await supabaseClient.from('rooms').select('*').eq('room_code', myPlayer.room_code).single();
+                if (room) {
+                    currentRoom = room;
+                    document.getElementById('display-room-code').innerText = room.room_code;
+                    
+                    let { data: existingPlayer } = await supabaseClient.from('players').select('*').eq('id', myPlayer.id).single();
+                    if (!existingPlayer) {
+                        const { data: newP } = await supabaseClient.from('players').insert([{ room_id: room.id, rp_name: myPlayer.rp_name, mc_pseudo: myPlayer.mc_pseudo, is_host: myPlayer.is_host, score: myPlayer.score }]).select().single();
+                        myPlayer = newP;
+                        myPlayer.room_code = room.room_code;
+                        localStorage.setItem('kg_user', JSON.stringify(myPlayer));
+                    }
+                    
+                    setupRealtimeSubscriptions();
+                    fetchPlayers();
+                    
+                    if (room.status === 'playing') {
+                        syncGameFromDB(room);
+                        return; 
+                    }
 
-                document.getElementById('login-screen').classList.add('hidden');
-                document.getElementById('lobby-screen').classList.remove('hidden');
-                
-                if (myPlayer.is_host) {
-                    document.getElementById('host-settings').classList.remove('hidden');
-                    document.getElementById('waiting-host-msg').classList.add('hidden');
-                } else {
-                    document.getElementById('host-settings').classList.add('hidden');
-                    document.getElementById('waiting-host-msg').classList.remove('hidden');
+                    showScreen('lobby-screen', true);
+                    
+                    if (myPlayer.is_host) {
+                        document.getElementById('host-settings').style.display = 'block';
+                        document.getElementById('waiting-host-msg').style.display = 'none';
+                    } else {
+                        document.getElementById('host-settings').style.display = 'none';
+                        document.getElementById('waiting-host-msg').style.display = 'block';
+                    }
+                    return;
                 }
-                return;
             }
         }
+        showScreen('login-screen', true);
+    } catch (e) {
+        console.error("Erreur de session:", e);
+        showScreen('login-screen', true);
     }
-    document.getElementById('login-screen').classList.remove('hidden');
 }
 
 document.getElementById('join-lobby-btn').addEventListener('click', async () => {
@@ -97,7 +118,7 @@ document.getElementById('join-lobby-btn').addEventListener('click', async () => 
     btn.innerText = "Connexion..."; btn.disabled = true;
 
     try {
-        let { data: room, error: searchError } = await supabaseClient.from('rooms').select('*').eq('room_code', roomCode).single();
+        let { data: room } = await supabaseClient.from('rooms').select('*').eq('room_code', roomCode).single();
         let isHost = false;
         
         if (!room) {
@@ -123,15 +144,14 @@ document.getElementById('join-lobby-btn').addEventListener('click', async () => 
         setupRealtimeSubscriptions();
         fetchPlayers();
 
-        document.getElementById('login-screen').classList.add('hidden');
-        document.getElementById('lobby-screen').classList.remove('hidden');
+        showScreen('lobby-screen', true);
         
         if (isHost) {
-            document.getElementById('host-settings').classList.remove('hidden');
-            document.getElementById('waiting-host-msg').classList.add('hidden');
+            document.getElementById('host-settings').style.display = 'block';
+            document.getElementById('waiting-host-msg').style.display = 'none';
         } else {
-            document.getElementById('host-settings').classList.add('hidden');
-            document.getElementById('waiting-host-msg').classList.remove('hidden');
+            document.getElementById('host-settings').style.display = 'none';
+            document.getElementById('waiting-host-msg').style.display = 'block';
         }
     } catch (err) {
         alert("❌ Erreur : " + err.message);
@@ -146,7 +166,7 @@ document.getElementById('disconnect-btn').addEventListener('click', async () => 
 });
 
 // ==========================================
-// 4. SYNCHRONISATION TEMPS RÉEL (REALTIME)
+// 5. SYNCHRONISATION TEMPS RÉEL (REALTIME)
 // ==========================================
 
 function setupRealtimeSubscriptions() {
@@ -196,7 +216,7 @@ function updateLobbyUI() {
 }
 
 // ==========================================
-// 5. LE MOTEUR DU JEU
+// 6. LE MOTEUR DU JEU
 // ==========================================
 
 function getSeededRandom(seed) { let x = Math.sin(seed++) * 10000; return x - Math.floor(x); }
@@ -228,10 +248,7 @@ function launchRoundUI(roundNum) {
     document.getElementById('total-round-display').innerText = totalRounds;
     document.getElementById('round-display').innerText = currentRound;
     
-    document.getElementById('login-screen').classList.add('hidden');
-    document.getElementById('lobby-screen').classList.add('hidden');
-    document.getElementById('animated-bg').classList.add('hidden');
-    document.getElementById('game-screen').classList.remove('hidden');
+    showScreen('game-screen');
     
     gameLayer.clearLayers(); marker = null;
     document.getElementById('result-overlay').classList.add('hidden');
@@ -242,26 +259,29 @@ function launchRoundUI(roundNum) {
     seededShuffle(allLocations, currentRoom.room_code);
     gameLocations = allLocations.slice(0, totalRounds); 
     
-    viewer.loadScene(gameLocations[currentRound - 1].id);
-    
-    const announcer = document.getElementById('round-announcer');
-    document.getElementById('round-title-text').innerText = "ROUND " + currentRound;
-    announcer.classList.remove('hidden');
-    map.off('click');
-    
-    const remainingMs = currentRoom.round_end_time - Date.now();
-    const delay = (remainingMs > roundTime * 1000) ? 2000 : 0; 
-
+    // 📍 LE FIX DE L'ÉCRAN BLEU PANORAMA
     setTimeout(() => {
-        announcer.classList.add('hidden');
-        map.invalidateSize(); 
-        resetMapZoom();
-        enableMapClick();
-        startTimerDB(); 
-    }, delay);
+        viewer.resize(); 
+        viewer.loadScene(gameLocations[currentRound - 1].id);
+        
+        const announcer = document.getElementById('round-announcer');
+        document.getElementById('round-title-text').innerText = "ROUND " + currentRound;
+        announcer.classList.remove('hidden');
+        map.off('click');
+        
+        const remainingMs = currentRoom.round_end_time - Date.now();
+        const delay = (remainingMs > roundTime * 1000) ? 2000 : 0; 
+
+        setTimeout(() => {
+            announcer.classList.add('hidden');
+            map.invalidateSize(); 
+            resetMapZoom();
+            enableMapClick();
+            startTimerDB(); 
+        }, delay);
+    }, 100);
 }
 
-// 📍 LA FONCTION F5 CORRIGÉE
 function syncGameFromDB(room) {
     currentRoom = room;
     totalRounds = room.total_rounds;
@@ -274,19 +294,13 @@ function syncGameFromDB(room) {
     seededShuffle(allLocations, currentRoom.room_code);
     gameLocations = allLocations.slice(0, totalRounds);
 
-    // 📍 On s'assure que TOUT EST CACHÉ proprement
-    document.getElementById('login-screen').classList.add('hidden');
-    document.getElementById('lobby-screen').classList.add('hidden');
-    document.getElementById('animated-bg').classList.add('hidden');
-    document.getElementById('podium-screen').classList.add('hidden');
-    
-    document.getElementById('game-screen').classList.remove('hidden');
+    showScreen('game-screen');
 
-    // 📍 FIX PANORAMA : On attend une demi-seconde que le lecteur soit prêt
+    // 📍 LE FIX DE L'ÉCRAN BLEU PANORAMA (Avec F5)
     setTimeout(() => {
+        viewer.resize(); 
         viewer.loadScene(gameLocations[currentRound - 1].id);
-        map.invalidateSize(); 
-        resetMapZoom();
+        map.invalidateSize(); resetMapZoom();
 
         const remainingMs = currentRoom.round_end_time - Date.now();
         if (remainingMs > 0) {
@@ -300,11 +314,11 @@ function syncGameFromDB(room) {
             hasValidated = true;
             startWaitingLobby();
         }
-    }, 500);
+    }, 100);
 }
 
 // ==========================================
-// 6. PRÉPARATION 360 & CARTE LEAFLET
+// 7. PRÉPARATION 360 & CARTE LEAFLET
 // ==========================================
 let timerInterval, waitInterval;
 let timeLeft = 0;
@@ -335,7 +349,7 @@ function resetMapZoom() {
 }
 
 // ==========================================
-// 7. JEU, RÉSULTATS & TIMER SUPABASE
+// 8. JEU, RÉSULTATS & TIMER SUPABASE
 // ==========================================
 
 function startTimerDB() {
@@ -465,7 +479,7 @@ function updateLeaderboardDisplay() {
 }
 
 // ==========================================
-// 8. TRANSITION & PODIUM MULTIJOUEUR
+// 9. TRANSITION & PODIUM MULTIJOUEUR
 // ==========================================
 
 function startWaitingLobby() {
@@ -502,9 +516,7 @@ function startWaitingLobby() {
 }
 
 function showPodium() {
-    document.getElementById('animated-bg').classList.remove('hidden');
-    document.getElementById('game-screen').classList.add('hidden');
-    document.getElementById('podium-screen').classList.remove('hidden');
+    showScreen('podium-screen', true);
     
     const podiumContent = document.getElementById('podium-content');
     const p1 = players[0]; const p2 = players[1]; const p3 = players[2];
