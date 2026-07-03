@@ -16,10 +16,11 @@
 </head>
 <body>
 
+    <div id="panorama"></div>
+    
     <div id="animated-bg"></div>
 
-    <!-- ================= ÉCRAN DE CONNEXION ================= -->
-    <div id="login-screen" class="screen active">
+    <div id="login-screen" class="screen">
         <div class="lobby-container login-box">
             <img src="logo.png" alt="Logo" class="lobby-logo">
             <h1 class="lobby-title">IDENTIFICATION</h1>
@@ -34,7 +35,6 @@
                 <input type="text" id="mc-pseudo" placeholder="Ex: Kameto" autocomplete="off">
             </div>
 
-            <!-- NOUVEAU : LE CODE DE LA PARTIE -->
             <div class="input-group">
                 <label for="room-code">Code de la partie</label>
                 <input type="text" id="room-code" placeholder="Ex: KCORP" autocomplete="off" style="text-transform: uppercase;">
@@ -45,8 +45,7 @@
         </div>
     </div>
 
-    <!-- ================= ÉCRAN LOBBY ================= -->
-    <div id="lobby-screen" class="screen hidden">
+    <div id="lobby-screen" class="screen hidden-screen">
         <div class="lobby-container">
             <h1 class="lobby-title">SALLE D'ATTENTE (<span id="display-room-code" style="color:var(--cyan);">...</span>)</h1>
             
@@ -54,7 +53,7 @@
                 <p style="color: #888;">Chargement des joueurs...</p>
             </div>
             
-            <div id="host-settings" class="host-settings hidden">
+            <div id="host-settings" class="host-settings hidden-screen">
                 <h3 class="settings-title">⚙️ Paramètres de la partie</h3>
                 <div class="settings-grid">
                     <div class="setting-item">
@@ -78,13 +77,12 @@
                 <button id="start-game-btn" class="guess-btn">Lancer la partie</button>
             </div>
             
-            <p id="waiting-host-msg" class="lobby-info hidden">En attente du lancement par l'hôte...</p>
+            <p id="waiting-host-msg" class="lobby-info hidden-screen">En attente du lancement par l'hôte...</p>
             <button id="disconnect-btn" class="disconnect-btn">Quitter la salle</button>
         </div>
     </div>
 
-    <!-- ================= ÉCRAN DE JEU ================= -->
-    <div id="game-screen" class="screen hidden">
+    <div id="game-ui" class="screen hidden-screen">
         <header class="game-header">
             <div class="logo"><img src="logo.png" alt="Karmine Guesser Logo"></div>
             <div class="game-stats">
@@ -103,8 +101,6 @@
             <div class="leaderboard-title">CLASSEMENT</div>
             <div id="leaderboard-content"></div>
         </div>
-
-        <div id="panorama"></div>
 
         <div id="map-wrapper">
             <div class="map-hover-area" id="map-container">
@@ -127,8 +123,7 @@
         </div>
     </div>
 
-    <!-- ================= ÉCRAN PODIUM FINAL ================= -->
-    <div id="podium-screen" class="screen hidden">
+    <div id="podium-screen" class="screen hidden-screen">
         <div class="podium-container">
             <img src="logo.png" alt="Logo" class="lobby-logo" style="margin-bottom: 20px;">
             <h1 class="lobby-title" style="color: var(--cyan);">FIN DE LA PARTIE</h1>
@@ -137,7 +132,6 @@
         </div>
     </div>
 
-    <!-- LE CERVEAU SUPABASE -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="app.js"></script>
 </body>
