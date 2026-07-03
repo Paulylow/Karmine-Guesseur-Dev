@@ -254,16 +254,14 @@ function launchRoundUI(roundNum) {
     seededShuffle(allLocations, currentRoom.room_code);
     gameLocations = allLocations.slice(0, totalRounds); 
     
-    viewer.resize(); 
     viewer.loadScene(gameLocations[currentRound - 1].id);
     
     const announcer = document.getElementById('round-announcer');
     const announcerText = document.getElementById('round-title-text');
     announcerText.innerText = "ROUND " + currentRound;
     
-    // 📍 FORCE LA RELANCE DE L'ANIMATION DU TEXTE "ROUND" !
     announcerText.style.animation = 'none';
-    void announcerText.offsetWidth; // Magie JS : force le navigateur à recalculer l'image
+    void announcerText.offsetWidth;
     announcerText.style.animation = 'zoomInFade 2s cubic-bezier(0.25, 1, 0.5, 1) forwards';
     
     announcer.classList.remove('hidden');
@@ -295,24 +293,21 @@ function syncGameFromDB(room) {
 
     switchScreen('game-ui');
 
-    setTimeout(() => {
-        viewer.resize(); 
-        viewer.loadScene(gameLocations[currentRound - 1].id);
-        map.invalidateSize(); resetMapZoom();
+    viewer.loadScene(gameLocations[currentRound - 1].id);
+    map.invalidateSize(); resetMapZoom();
 
-        const remainingMs = currentRoom.round_end_time - Date.now();
-        if (remainingMs > 0) {
-            enableMapClick();
-            startTimerDB();
-        } else {
-            document.getElementById('distanceDisplay').innerText = "Temps écoulé !";
-            document.getElementById('result-overlay').classList.remove('hidden');
-            document.getElementById('result-modal').classList.remove('hidden');
-            mapWrapper.classList.add('result-mode');
-            hasValidated = true;
-            startWaitingLobby();
-        }
-    }, 100);
+    const remainingMs = currentRoom.round_end_time - Date.now();
+    if (remainingMs > 0) {
+        enableMapClick();
+        startTimerDB();
+    } else {
+        document.getElementById('distanceDisplay').innerText = "Temps écoulé !";
+        document.getElementById('result-overlay').classList.remove('hidden');
+        document.getElementById('result-modal').classList.remove('hidden');
+        mapWrapper.classList.add('result-mode');
+        hasValidated = true;
+        startWaitingLobby();
+    }
 }
 
 // ==========================================
@@ -409,8 +404,15 @@ async function processRoundResult() {
         const distance = Math.sqrt(Math.pow(targetLocation.x - clickX, 2) + Math.pow(targetLocation.y - clickY, 2));
         let displayDistance = Math.round(distance);
         
-        if (displayDistance <= 2) { displayDistance = 0; myScore = maxScorePerRound; } 
-        else { myScore = Math.round(maxScorePerRound - (distance * 3.5)); if (myScore < 0) myScore = 0; }
+        if (displayDistance <= 2) { 
+            displayDistance = 0; 
+            myScore = maxScorePerRound; 
+        } 
+        else { 
+            // 📍 SCORING SÉVÈRE : -25 points par bloc d'écart !
+            myScore = Math.round(maxScorePerRound - (distance * 25)); 
+            if (myScore < 0) myScore = 0; 
+        }
 
         document.getElementById('distanceDisplay').innerText = displayDistance + " blocs";
         L.polyline([[clickY, clickX], [targetLocation.y, targetLocation.x]], {color: '#00B4D8', weight: 3, dashArray: '10, 10'}).addTo(gameLayer);
