@@ -35,25 +35,24 @@ let currentRoom = null;
 let players = []; 
 
 // ==========================================
-// 3. AIGUILLEUR D'ÉCRANS (Anti-Bug 3D)
+// 3. AIGUILLEUR D'ÉCRANS
 // ==========================================
-function switchScreen(targetScreenId) {
-    // 1. On cache tous les écrans avec l'ancienne méthode (opacity + z-index) qui respecte la 3D
-    ['login-screen', 'lobby-screen', 'game-screen', 'podium-screen'].forEach(id => {
-        document.getElementById(id).classList.add('hidden');
+function switchScreen(targetId) {
+    // On cache tous les écrans
+    ['login-screen', 'lobby-screen', 'game-ui', 'podium-screen'].forEach(id => {
+        document.getElementById(id).classList.add('hidden-screen');
     });
     
-    // 2. On affiche l'écran demandé
-    document.getElementById(targetScreenId).classList.remove('hidden');
+    // On affiche l'écran demandé
+    document.getElementById(targetId).classList.remove('hidden-screen');
 
-    // 3. On gère le fond animé (caché seulement pendant le jeu)
-    if (targetScreenId === 'game-screen') {
-        document.getElementById('animated-bg').classList.add('hidden');
+    // On gère le fond blanc animé
+    if (targetId === 'game-ui') {
+        document.getElementById('animated-bg').classList.add('hidden-screen');
     } else {
-        document.getElementById('animated-bg').classList.remove('hidden');
+        document.getElementById('animated-bg').classList.remove('hidden-screen');
     }
 }
-
 
 // ==========================================
 // 4. GESTION DE LA CONNEXION (ET DU F5)
@@ -89,11 +88,11 @@ async function checkSession() {
                     switchScreen('lobby-screen');
                     
                     if (myPlayer.is_host) {
-                        document.getElementById('host-settings').classList.remove('hidden');
-                        document.getElementById('waiting-host-msg').classList.add('hidden');
+                        document.getElementById('host-settings').classList.remove('hidden-screen');
+                        document.getElementById('waiting-host-msg').classList.add('hidden-screen');
                     } else {
-                        document.getElementById('host-settings').classList.add('hidden');
-                        document.getElementById('waiting-host-msg').classList.remove('hidden');
+                        document.getElementById('host-settings').classList.add('hidden-screen');
+                        document.getElementById('waiting-host-msg').classList.remove('hidden-screen');
                     }
                     return;
                 }
@@ -148,11 +147,11 @@ document.getElementById('join-lobby-btn').addEventListener('click', async () => 
         switchScreen('lobby-screen');
         
         if (isHost) {
-            document.getElementById('host-settings').classList.remove('hidden');
-            document.getElementById('waiting-host-msg').classList.add('hidden');
+            document.getElementById('host-settings').classList.remove('hidden-screen');
+            document.getElementById('waiting-host-msg').classList.add('hidden-screen');
         } else {
-            document.getElementById('host-settings').classList.add('hidden');
-            document.getElementById('waiting-host-msg').classList.remove('hidden');
+            document.getElementById('host-settings').classList.add('hidden-screen');
+            document.getElementById('waiting-host-msg').classList.remove('hidden-screen');
         }
     } catch (err) {
         alert("❌ Erreur : " + err.message);
@@ -167,7 +166,7 @@ document.getElementById('disconnect-btn').addEventListener('click', async () => 
 });
 
 // ==========================================
-// 5. SYNCHRONISATION TEMPS RÉEL (REALTIME)
+// 5. SYNCHRONISATION TEMPS RÉEL
 // ==========================================
 function setupRealtimeSubscriptions() {
     supabaseClient.channel('players_channel')
@@ -247,7 +246,7 @@ function launchRoundUI(roundNum) {
     document.getElementById('total-round-display').innerText = totalRounds;
     document.getElementById('round-display').innerText = currentRound;
     
-    switchScreen('game-screen');
+    switchScreen('game-ui');
     
     gameLayer.clearLayers(); marker = null;
     document.getElementById('result-overlay').classList.add('hidden');
@@ -258,7 +257,6 @@ function launchRoundUI(roundNum) {
     seededShuffle(allLocations, currentRoom.room_code);
     gameLocations = allLocations.slice(0, totalRounds); 
     
-    viewer.resize(); 
     viewer.loadScene(gameLocations[currentRound - 1].id);
     
     const announcer = document.getElementById('round-announcer');
@@ -290,26 +288,23 @@ function syncGameFromDB(room) {
     seededShuffle(allLocations, currentRoom.room_code);
     gameLocations = allLocations.slice(0, totalRounds);
 
-    switchScreen('game-screen');
+    switchScreen('game-ui');
 
-    setTimeout(() => {
-        viewer.resize(); 
-        viewer.loadScene(gameLocations[currentRound - 1].id);
-        map.invalidateSize(); resetMapZoom();
+    viewer.loadScene(gameLocations[currentRound - 1].id);
+    map.invalidateSize(); resetMapZoom();
 
-        const remainingMs = currentRoom.round_end_time - Date.now();
-        if (remainingMs > 0) {
-            enableMapClick();
-            startTimerDB();
-        } else {
-            document.getElementById('distanceDisplay').innerText = "Temps écoulé !";
-            document.getElementById('result-overlay').classList.remove('hidden');
-            document.getElementById('result-modal').classList.remove('hidden');
-            mapWrapper.classList.add('result-mode');
-            hasValidated = true;
-            startWaitingLobby();
-        }
-    }, 100);
+    const remainingMs = currentRoom.round_end_time - Date.now();
+    if (remainingMs > 0) {
+        enableMapClick();
+        startTimerDB();
+    } else {
+        document.getElementById('distanceDisplay').innerText = "Temps écoulé !";
+        document.getElementById('result-overlay').classList.remove('hidden');
+        document.getElementById('result-modal').classList.remove('hidden');
+        mapWrapper.classList.add('result-mode');
+        hasValidated = true;
+        startWaitingLobby();
+    }
 }
 
 // ==========================================
@@ -324,7 +319,12 @@ const pannellumScenes = {};
 allLocations.forEach(loc => {
     pannellumScenes[loc.id] = { "type": "cubemap", "cubeMap": [`panoramas/${loc.id}/panorama_0.png`, `panoramas/${loc.id}/panorama_1.png`, `panoramas/${loc.id}/panorama_2.png`, `panoramas/${loc.id}/panorama_3.png`, `panoramas/${loc.id}/panorama_4.png`, `panoramas/${loc.id}/panorama_5.png`] };
 });
-const viewer = pannellum.viewer('panorama', { "default": { "firstScene": allLocations[0].id, "autoLoad": true, "showZoomCtrl": false, "mouseZoom": true }, "scenes": pannellumScenes });
+
+const viewer = pannellum.viewer('panorama', { 
+    "default": { "firstScene": allLocations[0].id, "autoLoad": true, "showZoomCtrl": false, "mouseZoom": true }, 
+    "scenes": pannellumScenes 
+});
+
 const bounds = [[0, 0], [1427, 1427]];
 const map = L.map('map', { crs: L.CRS.Simple, maxZoom: 4, zoomSnap: 0, zoomDelta: 0.5, zoomControl: false, attributionControl: false, maxBounds: bounds, maxBoundsViscosity: 1.0 });
 L.imageOverlay('maps/map.png', bounds).addTo(map);
