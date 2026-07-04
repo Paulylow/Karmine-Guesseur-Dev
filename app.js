@@ -10,12 +10,13 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 // ==========================================
-// 2. CONFIGURATION DES LIEUX (LES 33 NOUVEAUX)
+// 2. CONFIGURATION DES LIEUX (MODE DEV)
 // ==========================================
 const allLocations = [
     { id: 'Lieu14', x: 0, y: 0 }, 
-    { id: 'Lieu16', x: 339.9851, y: 576.1043 }, // 📍 Coordonnées que tu m'as données !
-    { id: 'Lieu20', x: 0, y: 0 }, { id: 'Lieu21', x: 0, y: 0 }, { id: 'Lieu22', x: 0, y: 0 },
+    { id: 'Lieu16', x: 339.9851, y: 576.1043 }, // 📍 Validé !
+    { id: 'Lieu20', x: 242.5000, y: 548.5000 }, // 📍 Validé !
+    { id: 'Lieu21', x: 0, y: 0 }, { id: 'Lieu22', x: 0, y: 0 },
     { id: 'Lieu23', x: 0, y: 0 }, { id: 'Lieu24', x: 0, y: 0 }, { id: 'Lieu25', x: 0, y: 0 },
     { id: 'Lieu26', x: 0, y: 0 }, { id: 'Lieu27', x: 0, y: 0 }, { id: 'Lieu28', x: 0, y: 0 },
     { id: 'Lieu29', x: 0, y: 0 }, { id: 'Lieu30', x: 0, y: 0 }, { id: 'Lieu31', x: 0, y: 0 },
@@ -179,8 +180,12 @@ function setupRealtimeSubscriptions() {
             const oldRoom = currentRoom;
             currentRoom = payload.new;
             
-            if (currentRoom.status === 'playing_guessing' && (oldRoom.status === 'waiting' || oldRoom.status === 'playing_results')) {
-                launchRoundUI(currentRoom.current_round);
+            // 📍 LE FIX DU BOUTON "ROUND SUIVANT" EST ICI : 
+            // Si le numéro du round change, on lance la suite, peu importe le statut précédent.
+            if (currentRoom.status === 'playing_guessing') {
+                if (oldRoom.status !== 'playing_guessing' || oldRoom.current_round !== currentRoom.current_round) {
+                    launchRoundUI(currentRoom.current_round);
+                }
             }
             
             if (currentRoom.status === 'playing_results' && oldRoom.status === 'playing_guessing') {
@@ -224,8 +229,7 @@ function updateLobbyUI() {
 // 6. LE MOTEUR DU JEU MANUEL (MODE DEV)
 // ==========================================
 
-// Pas de mélange aléatoire : respecte l'ordre exact.
-function seededShuffle(array, seedStr) { return array; }
+function seededShuffle(array, seedStr) { return array; } // Pas de mélange !
 
 document.getElementById('start-game-btn').addEventListener('click', async () => {
     totalRounds = allLocations.length; 
@@ -255,14 +259,13 @@ function launchRoundUI(roundNum) {
     document.getElementById('total-round-display').innerText = totalRounds;
     document.getElementById('round-display').innerText = currentRound;
     
-    // Fixe le timer à l'infini visuellement
     const timerDisplay = document.getElementById('timer-display');
     if(timerDisplay) timerDisplay.innerText = "∞";
 
     switchScreen('game-ui');
     
     gameLayer.clearLayers(); 
-    marker = null; // 📍 FIX : Remise à zéro propre du marqueur
+    marker = null;
     
     document.getElementById('result-overlay').classList.add('hidden');
     document.getElementById('result-modal').classList.add('hidden');
@@ -349,7 +352,7 @@ function syncGameFromDB(room) {
 // 7. PRÉPARATION 360 & CARTE LEAFLET
 // ==========================================
 let hasValidated = false;
-let marker = null; // 📍 FIX : Création de la variable du marqueur
+let marker = null; 
 
 const pannellumScenes = {};
 allLocations.forEach(loc => {
@@ -459,7 +462,6 @@ async function processRoundResult(isManual = true) {
     }, 500);
 }
 
-// FIX: Pas de bug si tu n'as pas de score "header" dans ton HTML local
 function updateLeaderboardDisplay() {
     const lbContent = document.getElementById('leaderboard-content');
     lbContent.innerHTML = '';
