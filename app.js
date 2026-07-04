@@ -10,27 +10,39 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 // ==========================================
-// 2. CONFIGURATION DES LIEUX (MODE DEV)
+// 2. CONFIGURATION DES LIEUX (49 MAPS COMPLET)
 // ==========================================
 const allLocations = [
-    { id: 'Lieu14', x: 0, y: 0 }, 
-    { id: 'Lieu16', x: 339.9851, y: 576.1043 }, // 📍 Validé !
-    { id: 'Lieu20', x: 242.5000, y: 548.5000 }, // 📍 Validé !
-    { id: 'Lieu21', x: 0, y: 0 }, { id: 'Lieu22', x: 0, y: 0 },
-    { id: 'Lieu23', x: 0, y: 0 }, { id: 'Lieu24', x: 0, y: 0 }, { id: 'Lieu25', x: 0, y: 0 },
-    { id: 'Lieu26', x: 0, y: 0 }, { id: 'Lieu27', x: 0, y: 0 }, { id: 'Lieu28', x: 0, y: 0 },
-    { id: 'Lieu29', x: 0, y: 0 }, { id: 'Lieu30', x: 0, y: 0 }, { id: 'Lieu31', x: 0, y: 0 },
-    { id: 'Lieu32', x: 0, y: 0 }, { id: 'Lieu33', x: 0, y: 0 }, { id: 'Lieu34', x: 0, y: 0 },
-    { id: 'Lieu35', x: 0, y: 0 }, { id: 'Lieu36', x: 0, y: 0 }, { id: 'Lieu37', x: 0, y: 0 },
-    { id: 'Lieu38', x: 0, y: 0 }, { id: 'Lieu39', x: 0, y: 0 }, { id: 'Lieu40', x: 0, y: 0 },
-    { id: 'Lieu41', x: 0, y: 0 }, { id: 'Lieu42', x: 0, y: 0 }, { id: 'Lieu43', x: 0, y: 0 },
-    { id: 'Lieu44', x: 0, y: 0 }, { id: 'Lieu45', x: 0, y: 0 }, { id: 'Lieu46', x: 0, y: 0 },
-    { id: 'Lieu47', x: 0, y: 0 }, { id: 'Lieu48', x: 0, y: 0 }, { id: 'Lieu49', x: 0, y: 0 },
-    { id: 'Lieu50', x: 0, y: 0 }
+    { id: 'Lieu1', x: 634.0625, y: 809.5625 }, { id: 'Lieu2', x: 377.5, y: 779.4375 }, 
+    { id: 'Lieu3', x: 496.375, y: 992.4375 }, { id: 'Lieu4', x: 293.06264472481286, y: 958.6056737754375 },
+    { id: 'Lieu5', x: 505.5625, y: 730.3125 }, { id: 'Lieu6', x: 273.3125, y: 912.1875 },
+    { id: 'Lieu7', x: 930.6405894730218, y: 841.7385479362847 }, { id: 'Lieu8', x: 944.4112590713203, y: 630.8679668762923 },
+    { id: 'Lieu9', x: 1047.249507588725, y: 551.226798181108 }, { id: 'Lieu10', x: 1072.8678913777107, y: 601.7731135589685 },
+    { id: 'Lieu11', x: 1019.6200190354904, y: 582.2998689750975 }, { id: 'Lieu12', x: 1037.2179155741558, y: 152.22015514203198 },
+    { id: 'Lieu13', x: 875.5116584116552, y: 375.5173030727776 }, { id: 'Lieu14', x: 861.6655, y: 403.4375 },
+    { id: 'Lieu15', x: 728.6828241093921, y: 428.20462478819366 }, { id: 'Lieu16', x: 339.9851, y: 576.1043 },
+    { id: 'Lieu17', x: 631.5622699443798, y: 327.5529679698231 }, { id: 'Lieu18', x: 482.4032682804576, y: 230.4027768947771 }, 
+    { id: 'Lieu19', x: 662.6477195672688, y: 100.57379001605248 }, { id: 'Lieu20', x: 242.5000, y: 548.5000 },
+    { id: 'Lieu21', x: 171.6449, y: 491.9308 }, { id: 'Lieu22', x: 192.7500, y: 331.0625 },
+    { id: 'Lieu23', x: 252.5609, y: 302.1883 }, { id: 'Lieu24', x: 379.8125, y: 127.5625 },
+    { id: 'Lieu25', x: 411.0148, y: 36.8385 }, { id: 'Lieu26', x: 560.6031, y: 19.3311 },
+    { id: 'Lieu27', x: 909.5080, y: 175.1678 }, { id: 'Lieu28', x: 725.9193, y: 255.7433 },
+    { id: 'Lieu29', x: 651.7683, y: 405.2676 }, { id: 'Lieu31', x: 443.7500, y: 576.2500 },
+    { id: 'Lieu32', x: 759.4661, y: 730.2397 }, { id: 'Lieu33', x: 789.3750, y: 848.2500 },
+    { id: 'Lieu34', x: 838.7500, y: 756.9375 }, { id: 'Lieu35', x: 770.3897, y: 649.3879 },
+    { id: 'Lieu36', x: 640.5000, y: 642.6250 }, { id: 'Lieu37', x: 582.7500, y: 626.5000 },
+    { id: 'Lieu38', x: 620.3312, y: 696.4872 }, { id: 'Lieu39', x: 643.1747, y: 864.7542 },
+    { id: 'Lieu40', x: 652.6250, y: 870.3125 }, { id: 'Lieu41', x: 614.4375, y: 787.1250 },
+    { id: 'Lieu42', x: 591.7486, y: 828.8663 }, { id: 'Lieu43', x: 546.6431, y: 832.0674 },
+    { id: 'Lieu44', x: 546.8892, y: 950.0575 }, { id: 'Lieu45', x: 555.4707, y: 1015.7725 },
+    { id: 'Lieu46', x: 515.5625, y: 979.4375 }, { id: 'Lieu47', x: 702.8177, y: 1070.2103 },
+    { id: 'Lieu48', x: 676.5000, y: 958.6875 }, { id: 'Lieu49', x: 651.4352, y: 775.5089 },
+    { id: 'Lieu50', x: 640.7326, y: 840.1270 }
 ];
 
 const maxScorePerRound = 5000;
-let totalRounds = allLocations.length; 
+let totalRounds = 5; 
+let roundTime = 30; 
 let currentRound = 1;
 let gameLocations = []; 
 
@@ -81,7 +93,7 @@ async function checkSession() {
                     setupRealtimeSubscriptions();
                     fetchPlayers();
                     
-                    if (room.status.startsWith('playing')) {
+                    if (room.status === 'playing') {
                         syncGameFromDB(room);
                         return; 
                     }
@@ -180,20 +192,10 @@ function setupRealtimeSubscriptions() {
             const oldRoom = currentRoom;
             currentRoom = payload.new;
             
-            // 📍 LE FIX DU BOUTON "ROUND SUIVANT" EST ICI : 
-            // Si le numéro du round change, on lance la suite, peu importe le statut précédent.
-            if (currentRoom.status === 'playing_guessing') {
-                if (oldRoom.status !== 'playing_guessing' || oldRoom.current_round !== currentRoom.current_round) {
+            if (currentRoom.status === 'playing') {
+                if (oldRoom.status === 'waiting' || oldRoom.current_round !== currentRoom.current_round) {
                     launchRoundUI(currentRoom.current_round);
                 }
-            }
-            
-            if (currentRoom.status === 'playing_results' && oldRoom.status === 'playing_guessing') {
-                if (!hasValidated) processRoundResult(false);
-            }
-
-            if (currentRoom.status === 'finished' && oldRoom.status !== 'finished') {
-                showPodium();
             }
         }).subscribe();
 }
@@ -226,124 +228,104 @@ function updateLobbyUI() {
 }
 
 // ==========================================
-// 6. LE MOTEUR DU JEU MANUEL (MODE DEV)
+// 6. LE MOTEUR DU JEU DE PRODUCTION
 // ==========================================
-
-function seededShuffle(array, seedStr) { return array; } // Pas de mélange !
+function getSeededRandom(seed) { let x = Math.sin(seed++) * 10000; return x - Math.floor(x); }
+function seededShuffle(array, seedStr) {
+    let seed = 0;
+    for (let i = 0; i < seedStr.length; i++) seed += seedStr.charCodeAt(i);
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(getSeededRandom(seed++) * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
 
 document.getElementById('start-game-btn').addEventListener('click', async () => {
-    totalRounds = allLocations.length; 
+    totalRounds = parseInt(document.getElementById('setting-rounds').value);
+    roundTime = parseInt(document.getElementById('setting-time').value);
+    const endTime = Date.now() + 2000 + (roundTime * 1000); 
+
     await supabaseClient.from('rooms').update({ 
-        status: 'playing_guessing', total_rounds: totalRounds, current_round: 1 
+        status: 'playing', total_rounds: totalRounds, round_time: roundTime, 
+        current_round: 1, round_end_time: endTime 
     }).eq('id', currentRoom.id);
 });
-
-document.getElementById('host-end-round-btn').addEventListener('click', async () => {
-    await supabaseClient.from('rooms').update({ status: 'playing_results' }).eq('id', currentRoom.id);
-});
-
-document.getElementById('host-next-round-btn').addEventListener('click', async () => {
-    if (currentRound >= totalRounds) {
-        await supabaseClient.from('rooms').update({ status: 'finished' }).eq('id', currentRoom.id);
-    } else {
-        await supabaseClient.from('rooms').update({ status: 'playing_guessing', current_round: currentRound + 1 }).eq('id', currentRoom.id);
-    }
-});
-
 
 function launchRoundUI(roundNum) {
     currentRound = roundNum;
     totalRounds = currentRoom.total_rounds;
-    hasValidated = false;
+    roundTime = currentRoom.round_time;
     
     document.getElementById('total-round-display').innerText = totalRounds;
     document.getElementById('round-display').innerText = currentRound;
     
-    const timerDisplay = document.getElementById('timer-display');
-    if(timerDisplay) timerDisplay.innerText = "∞";
-
     switchScreen('game-ui');
     
-    gameLayer.clearLayers(); 
-    marker = null;
-    
+    gameLayer.clearLayers(); marker = null;
     document.getElementById('result-overlay').classList.add('hidden');
     document.getElementById('result-modal').classList.add('hidden');
     mapWrapper.classList.remove('result-mode');
     guessBtn.innerText = "Placer le point"; guessBtn.disabled = true;
 
-    if (myPlayer.is_host) document.getElementById('host-end-round-btn').classList.remove('hidden-screen');
-    else document.getElementById('host-end-round-btn').classList.add('hidden-screen');
+    seededShuffle(allLocations, currentRoom.room_code);
+    gameLocations = allLocations.slice(0, totalRounds); 
     
-    document.getElementById('host-next-round-btn').classList.add('hidden-screen');
-
-    gameLocations = allLocations; 
-    
-    viewer.resize(); 
+    viewer.resize();
     viewer.loadScene(gameLocations[currentRound - 1].id);
     
     const announcer = document.getElementById('round-announcer');
     const announcerText = document.getElementById('round-title-text');
-    const announcerSub = document.getElementById('round-subtitle');
-    
-    announcerText.childNodes[0].nodeValue = "ROUND " + currentRound;
-    if(announcerSub) announcerSub.innerText = "(" + gameLocations[currentRound - 1].id + ")";
+    announcerText.innerText = "ROUND " + currentRound;
     
     announcerText.style.animation = 'none';
-    void announcerText.offsetWidth; 
+    void announcerText.offsetWidth;
     announcerText.style.animation = 'zoomInFade 2s cubic-bezier(0.25, 1, 0.5, 1) forwards';
     
     announcer.classList.remove('hidden');
     map.off('click');
     
+    const remainingMs = currentRoom.round_end_time - Date.now();
+    const delay = (remainingMs > roundTime * 1000) ? 2000 : 0; 
+
     setTimeout(() => {
         announcer.classList.add('hidden');
         map.invalidateSize(); 
         resetMapZoom();
         enableMapClick();
-    }, 2000);
+        startTimerDB(); 
+    }, delay);
 }
 
 function syncGameFromDB(room) {
     currentRoom = room;
     totalRounds = room.total_rounds;
+    roundTime = room.round_time;
     currentRound = room.current_round;
 
     document.getElementById('total-round-display').innerText = totalRounds;
     document.getElementById('round-display').innerText = currentRound;
-    
-    const timerDisplay = document.getElementById('timer-display');
-    if(timerDisplay) timerDisplay.innerText = "∞";
 
-    gameLocations = allLocations;
+    seededShuffle(allLocations, currentRoom.room_code);
+    gameLocations = allLocations.slice(0, totalRounds);
 
     switchScreen('game-ui');
 
     setTimeout(() => {
-        viewer.resize(); 
+        viewer.resize();
         viewer.loadScene(gameLocations[currentRound - 1].id);
         map.invalidateSize(); resetMapZoom();
 
-        if (room.status === 'playing_guessing') {
-            hasValidated = false;
+        const remainingMs = currentRoom.round_end_time - Date.now();
+        if (remainingMs > 0) {
             enableMapClick();
-            if (myPlayer.is_host) document.getElementById('host-end-round-btn').classList.remove('hidden-screen');
-        } 
-        else if (room.status === 'playing_results') {
-            hasValidated = true;
+            startTimerDB();
+        } else {
+            document.getElementById('distanceDisplay').innerText = "Temps écoulé !";
             document.getElementById('result-overlay').classList.remove('hidden');
             document.getElementById('result-modal').classList.remove('hidden');
             mapWrapper.classList.add('result-mode');
-            document.getElementById('host-end-round-btn').classList.add('hidden-screen');
-            
-            if (myPlayer.is_host) {
-                document.getElementById('host-next-round-btn').classList.remove('hidden-screen');
-                document.getElementById('waiting-msg').innerText = "C'est à toi de lancer la suite !";
-                if(currentRound >= totalRounds) document.getElementById('host-next-round-btn').innerText = "🏆 VOIR LE PODIUM";
-                else document.getElementById('host-next-round-btn').innerText = "▶️ ROUND SUIVANT";
-            } else {
-                document.getElementById('waiting-msg').innerText = "En attente de l'hôte pour la suite...";
-            }
+            hasValidated = true;
+            startWaitingLobby();
         }
     }, 100);
 }
@@ -351,8 +333,11 @@ function syncGameFromDB(room) {
 // ==========================================
 // 7. PRÉPARATION 360 & CARTE LEAFLET
 // ==========================================
-let hasValidated = false;
-let marker = null; 
+let timerInterval, waitInterval;
+let timeLeft = 0;
+let transitionTime = 5;
+let hasValidated = false, isTransitioning = false;
+let marker = null;
 
 const pannellumScenes = {};
 allLocations.forEach(loc => {
@@ -371,6 +356,7 @@ const gameLayer = L.layerGroup().addTo(map);
 
 const guessBtn = document.getElementById('guess-btn');
 const mapWrapper = document.getElementById('map-wrapper');
+const timerDisplay = document.getElementById('timer-display');
 const msgBox = document.getElementById('waiting-msg');
 
 const resizeObserver = new ResizeObserver(() => { map.invalidateSize({ pan: false }); });
@@ -382,8 +368,33 @@ function resetMapZoom() {
 }
 
 // ==========================================
-// 8. RÉSULTATS (Pilotés manuellement)
+// 8. JEU, RÉSULTATS & TIMER SUPABASE
 // ==========================================
+function startTimerDB() {
+    hasValidated = false;
+    isTransitioning = false;
+    
+    clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+        const remainingMs = currentRoom.round_end_time - Date.now();
+        timeLeft = Math.ceil(remainingMs / 1000);
+        
+        if (timeLeft < 0) timeLeft = 0;
+        timerDisplay.innerText = timeLeft;
+        
+        if (timeLeft <= 5 && !hasValidated && timeLeft > 0) timerDisplay.classList.add('timer-warning');
+        else timerDisplay.classList.remove('timer-warning');
+        
+        if (hasValidated && !isTransitioning) msgBox.innerHTML = `En attente des autres joueurs... (<span id="auto-next-timer">${timeLeft}</span>s)`;
+        
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            timerDisplay.classList.remove('timer-warning');
+            if (!hasValidated) processRoundResult(); 
+            else startWaitingLobby(); 
+        }
+    }, 1000);
+}
 
 function enableMapClick() {
     map.on('click', function(e) {
@@ -391,19 +402,16 @@ function enableMapClick() {
         if (marker !== null) gameLayer.removeLayer(marker);
         marker = L.marker([e.latlng.lat, e.latlng.lng]).addTo(gameLayer);
         guessBtn.disabled = false; guessBtn.innerText = "Valider !";
-
-        // 📍 IMPRESSION AUTOMATIQUE DANS LA CONSOLE
-        const currentMapId = gameLocations[currentRound - 1].id;
-        console.log(`%c[MAP CAPTURÉE] %c{ id: '${currentMapId}', x: ${e.latlng.lng.toFixed(4)}, y: ${e.latlng.lat.toFixed(4)} },`, "color: #00B4D8; font-weight: bold;", "color: #4CAF50; font-weight: bold; font-size: 14px;");
     });
 }
 
-guessBtn.addEventListener('click', () => { if(marker && !hasValidated) processRoundResult(true); });
+guessBtn.addEventListener('click', () => { if(marker && !hasValidated) processRoundResult(); });
 
-async function processRoundResult(isManual = true) {
+async function processRoundResult() {
     hasValidated = true; 
     map.off('click'); 
     guessBtn.disabled = true;
+    timerDisplay.classList.remove('timer-warning');
 
     const targetLocation = gameLocations[currentRound - 1];
     let myScore = 0;
@@ -422,6 +430,7 @@ async function processRoundResult(isManual = true) {
             myScore = maxScorePerRound; 
         } 
         else { 
+            // 📍 SCORING SÉVÈRE : -25 points par bloc d'écart !
             myScore = Math.round(maxScorePerRound - (distance * 25)); 
             if (myScore < 0) myScore = 0; 
         }
@@ -429,7 +438,7 @@ async function processRoundResult(isManual = true) {
         document.getElementById('distanceDisplay').innerText = displayDistance + " blocs";
         L.polyline([[clickY, clickX], [targetLocation.y, targetLocation.x]], {color: '#00B4D8', weight: 3, dashArray: '10, 10'}).addTo(gameLayer);
     } else {
-        document.getElementById('distanceDisplay').innerText = "0 point placé !";
+        document.getElementById('distanceDisplay').innerText = "Temps écoulé !";
     }
 
     const meInDB = players.find(p => p.id === myPlayer.id);
@@ -441,22 +450,17 @@ async function processRoundResult(isManual = true) {
     
     document.getElementById('result-overlay').classList.remove('hidden');
     mapWrapper.classList.add('result-mode'); 
-    
-    document.getElementById('host-end-round-btn').classList.add('hidden-screen');
 
     setTimeout(() => {
         map.invalidateSize(); 
         map.flyToBounds(pointsToFit, { padding: [60, 60], duration: 1.5 });
         setTimeout(() => {
             document.getElementById('result-modal').classList.remove('hidden');
-            
-            if (myPlayer.is_host) {
-                document.getElementById('host-next-round-btn').classList.remove('hidden-screen');
-                document.getElementById('waiting-msg').innerText = "C'est à toi de lancer la suite !";
-                if(currentRound >= totalRounds) document.getElementById('host-next-round-btn').innerText = "🏆 VOIR LE PODIUM";
-                else document.getElementById('host-next-round-btn').innerText = "▶️ ROUND SUIVANT";
+            const remainingMs = currentRoom.round_end_time - Date.now();
+            if (remainingMs > 0) {
+                msgBox.innerHTML = `En attente des autres joueurs... (<span id="auto-next-timer">${Math.ceil(remainingMs/1000)}</span>s)`;
             } else {
-                document.getElementById('waiting-msg').innerText = "En attente de l'hôte pour la suite...";
+                startWaitingLobby();
             }
         }, 1500);
     }, 500);
@@ -495,8 +499,40 @@ function updateLeaderboardDisplay() {
 }
 
 // ==========================================
-// 9. PODIUM MULTIJOUEUR
+// 9. TRANSITION & PODIUM MULTIJOUEUR
 // ==========================================
+function startWaitingLobby() {
+    if(isTransitioning) return;
+    isTransitioning = true;
+    transitionTime = 5;
+
+    function updateMsg() {
+        if (currentRound >= totalRounds) msgBox.innerHTML = `Partie terminée ! Résultats dans <span id="auto-next-timer">${transitionTime}</span>s...`;
+        else msgBox.innerHTML = `Prochain round dans <span id="auto-next-timer">${transitionTime}</span>s...`;
+    }
+    updateMsg();
+
+    clearInterval(waitInterval);
+    waitInterval = setInterval(async () => {
+        transitionTime--;
+        updateMsg();
+        
+        if (transitionTime <= 0) {
+            clearInterval(waitInterval);
+            if (currentRound >= totalRounds) {
+                showPodium();
+            } else {
+                if (myPlayer.is_host) {
+                    const nextRound = currentRound + 1;
+                    const endTime = Date.now() + 2000 + (currentRoom.round_time * 1000);
+                    await supabaseClient.from('rooms').update({ current_round: nextRound, round_end_time: endTime }).eq('id', currentRoom.id);
+                } else {
+                    msgBox.innerHTML = "L'hôte lance la suite...";
+                }
+            }
+        }
+    }, 1000);
+}
 
 function showPodium() {
     switchScreen('podium-screen');
