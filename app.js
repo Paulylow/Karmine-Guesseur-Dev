@@ -10,7 +10,7 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 // ==========================================
-// 2. CONFIGURATION DES LIEUX (MODE DEV - UNIQUEMENT LES NOUVEAUX)
+// 2. CONFIGURATION DES LIEUX (LES 33 NOUVEAUX)
 // ==========================================
 const allLocations = [
     { id: 'Lieu14', x: 0, y: 0 }, 
@@ -223,14 +223,8 @@ function updateLobbyUI() {
 // ==========================================
 // 6. LE MOTEUR DU JEU SANS TIMER (MODE DEV)
 // ==========================================
-
-// 📍 On désactive le mélange pour le mode Dev !
-function seededShuffle(array, seedStr) {
-    return array; // Laisse la liste intacte (Lieu14, Lieu16, Lieu20...)
-}
-
 document.getElementById('start-game-btn').addEventListener('click', async () => {
-    totalRounds = allLocations.length; // 📍 Force le maximum pour le mode dev
+    totalRounds = allLocations.length; 
     await supabaseClient.from('rooms').update({ 
         status: 'playing_guessing', total_rounds: totalRounds, current_round: 1 
     }).eq('id', currentRoom.id);
@@ -270,15 +264,17 @@ function launchRoundUI(roundNum) {
     
     document.getElementById('host-next-round-btn').classList.add('hidden-screen');
 
-    seededShuffle(allLocations, currentRoom.room_code);
-    gameLocations = allLocations.slice(0, totalRounds); 
+    gameLocations = allLocations; // PAS DE MÉLANGE EN MODE DEV !
     
     viewer.resize(); 
     viewer.loadScene(gameLocations[currentRound - 1].id);
     
     const announcer = document.getElementById('round-announcer');
     const announcerText = document.getElementById('round-title-text');
-    announcerText.innerText = "ROUND " + currentRound;
+    const announcerSub = document.getElementById('round-subtitle');
+    
+    announcerText.childNodes[0].nodeValue = "ROUND " + currentRound;
+    announcerSub.innerText = "(" + gameLocations[currentRound - 1].id + ")";
     
     announcerText.style.animation = 'none';
     void announcerText.offsetWidth; 
@@ -303,8 +299,7 @@ function syncGameFromDB(room) {
     document.getElementById('total-round-display').innerText = totalRounds;
     document.getElementById('round-display').innerText = currentRound;
 
-    seededShuffle(allLocations, currentRoom.room_code);
-    gameLocations = allLocations.slice(0, totalRounds);
+    gameLocations = allLocations; // PAS DE MÉLANGE EN MODE DEV !
 
     switchScreen('game-ui');
 
@@ -380,9 +375,9 @@ function enableMapClick() {
         marker = L.marker([e.latlng.lat, e.latlng.lng]).addTo(gameLayer);
         guessBtn.disabled = false; guessBtn.innerText = "Valider !";
 
-        // 📍 MODE DEV : IMPRESSION AUTOMATIQUE DANS LA CONSOLE
+        // 📍 IMPRESSION AUTOMATIQUE DANS LA CONSOLE
         const currentMapId = gameLocations[currentRound - 1].id;
-        console.log(`{ id: '${currentMapId}', x: ${e.latlng.lng.toFixed(4)}, y: ${e.latlng.lat.toFixed(4)} },`);
+        console.log(`%c[MAP CAPTURÉE] %c{ id: '${currentMapId}', x: ${e.latlng.lng.toFixed(4)}, y: ${e.latlng.lat.toFixed(4)} },`, "color: #00B4D8; font-weight: bold;", "color: #4CAF50; font-weight: bold; font-size: 14px;");
     });
 }
 
@@ -405,6 +400,7 @@ async function processRoundResult(isManual = true) {
         const distance = Math.sqrt(Math.pow(targetLocation.x - clickX, 2) + Math.pow(targetLocation.y - clickY, 2));
         let displayDistance = Math.round(distance);
         
+        // Comme c'est le mode dev et que les maps sont à 0, le score sera faux, c'est normal !
         if (displayDistance <= 2) { 
             displayDistance = 0; 
             myScore = maxScorePerRound; 
