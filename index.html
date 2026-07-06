@@ -17,7 +17,6 @@
 <body>
 
     <div id="panorama"></div>
-    
     <div id="animated-bg"></div>
 
     <div id="login-screen" class="screen">
@@ -47,7 +46,9 @@
 
     <div id="lobby-screen" class="screen hidden-screen">
         <div class="lobby-container">
-            <h1 class="lobby-title">SALLE D'ATTENTE (<span id="display-room-code" style="color:var(--cyan);">...</span>)</h1>
+            <!-- 📍 Compteur de joueurs ajouté ici -->
+            <h1 class="lobby-title">SALLE D'ATTENTE (<span id="display-room-code" style="color:var(--cyan);">...</span>)<br>
+            <span id="player-count" style="font-size: 18px; color: #888; display: block; margin-top: 5px; font-family: 'Satoshi', sans-serif; text-transform: none;">0 Joueur</span></h1>
             
             <div class="players-list" id="lobby-players">
                 <p style="color: #888;">Chargement des joueurs...</p>
@@ -125,11 +126,16 @@
     </div>
 
     <div id="podium-screen" class="screen hidden-screen">
-        <div class="podium-container">
+        <div class="podium-container" style="max-height: 90vh; overflow-y: auto;">
             <img src="logo.png" alt="Logo" class="lobby-logo" style="margin-bottom: 20px;">
             <h1 class="lobby-title" style="color: var(--cyan);">FIN DE LA PARTIE</h1>
+            
             <div class="podium" id="podium-content"></div>
-            <button id="return-lobby-btn" class="guess-btn" style="max-width: 300px; margin-top: 40px;">Nouvelle Partie</button>
+            
+            <!-- 📍 Liste des autres joueurs sous le podium -->
+            <div id="podium-others" class="players-list hidden-screen" style="margin-top: 30px; margin-bottom: 0;"></div>
+
+            <button id="return-lobby-btn" class="guess-btn" style="max-width: 300px; margin-top: 30px;">Nouvelle Partie</button>
         </div>
     </div>
 
