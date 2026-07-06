@@ -182,8 +182,9 @@ document.getElementById('disconnect-btn').addEventListener('click', async () => 
 // 5. SYNCHRONISATION TEMPS RÉEL
 // ==========================================
 function setupRealtimeSubscriptions() {
+    // 📍 FIX : On enlève le filtre sur le room_id pour que les suppressions (DELETE) soient bien captées.
     supabaseClient.channel('players_channel')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'players', filter: `room_id=eq.${currentRoom.id}` }, payload => {
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, payload => {
             fetchPlayers();
         }).subscribe();
 
@@ -211,7 +212,6 @@ function updateLobbyUI() {
     const lobbyPlayersDiv = document.getElementById('lobby-players');
     lobbyPlayersDiv.innerHTML = '';
     
-    // 📍 Mise à jour du compteur de joueurs
     const countEl = document.getElementById('player-count');
     if(countEl) countEl.innerText = `${players.length} Joueur${players.length > 1 ? 's' : ''}`;
     
@@ -236,7 +236,6 @@ function updateLobbyUI() {
 // ==========================================
 function getSeededRandom(seed) { let x = Math.sin(seed++) * 10000; return x - Math.floor(x); }
 
-// 📍 FIX : Fonction de mélange PROPRE qui ne modifie pas la liste de base (plus de doublons !)
 function getGameLocations(seedStr) {
     let copy = [...allLocations];
     let seed = 0;
@@ -275,7 +274,6 @@ function launchRoundUI(roundNum) {
     mapWrapper.classList.remove('result-mode');
     guessBtn.innerText = "Placer le point"; guessBtn.disabled = true;
 
-    // 📍 La liste est générée proprement
     gameLocations = getGameLocations(currentRoom.room_code).slice(0, totalRounds); 
     
     viewer.resize();
@@ -300,7 +298,7 @@ function launchRoundUI(roundNum) {
         map.invalidateSize(); 
         resetMapZoom();
         enableMapClick();
-        startTimerDB(false); // Faux car c'est un lancement normal
+        startTimerDB(false);
     }, delay);
 }
 
@@ -323,7 +321,7 @@ function syncGameFromDB(room) {
         map.invalidateSize(); resetMapZoom();
 
         enableMapClick();
-        startTimerDB(true); // Vrai car c'est une reconnexion (F5)
+        startTimerDB(true);
     }, 100);
 }
 
@@ -375,7 +373,6 @@ function startTimerDB(isSync = false) {
     let endTime = currentRoom.round_end_time;
     let remainingMs = endTime - Date.now();
 
-    // 📍 FIX "CHRONO À ZERO" : Si l'horloge du joueur déconne, on lui assure quand même le chrono.
     if (remainingMs < 0 || remainingMs > (currentRoom.round_time * 1000 + 5000)) {
         let fallbackTime = isSync ? (currentRoom.round_time * 1000) - 5000 : (currentRoom.round_time * 1000);
         if(fallbackTime < 5000) fallbackTime = 5000;
@@ -481,7 +478,6 @@ function updateLeaderboardDisplay() {
         lbContent.innerHTML += `
             <div class="lb-row ${p.id === myPlayer.id ? 'me' : ''}">
                 <div style="display:flex; align-items:center;">
-                    <!-- 📍 FIX: min-width pour que le numéro ne soit plus écrasé s'il y a 2 chiffres -->
                     <span style="min-width: 25px; display: inline-block; font-size: 13px;">#${i+1}</span>
                     <img src="https://minotar.net/helm/${p.mc_pseudo}/30.png" class="lb-head" onerror="this.src='https://minotar.net/helm/Steve/30.png'">
                     <span>${p.rp_name}</span>
@@ -565,7 +561,6 @@ function showPodium() {
         </div>
     `;
 
-    // 📍 Ajout de la liste pour les autres joueurs
     let othersHtml = '';
     for(let i = 3; i < players.length; i++) {
         let p = players[i];
