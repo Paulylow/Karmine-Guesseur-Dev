@@ -61,6 +61,8 @@ body, html {
     border: 2px solid var(--cyan); border-radius: 12px; padding: 40px; text-align: center;
     box-shadow: 0 15px 50px rgba(0, 0, 0, 0.1);
     pointer-events: auto;
+    max-height: 90vh; /* 📍 FIX : Empêche la fenêtre de dépasser de l'écran ! */
+    overflow-y: auto; /* 📍 FIX : Permet de scroller à l'intérieur si l'écran est petit */
 }
 
 .login-box { max-width: 450px; }
@@ -80,7 +82,9 @@ body, html {
 
 .players-list {
     background: #f9f9f9; border: 1px solid #eee; border-radius: 8px; padding: 15px;
-    margin-bottom: 20px; max-height: 250px; overflow-y: auto; text-align: left;
+    margin-bottom: 20px; 
+    max-height: 30vh; /* 📍 FIX : Réduit la taille max de la liste pour les petits écrans */
+    overflow-y: auto; text-align: left;
 }
 .player-item { display: flex; justify-content: flex-start; align-items: center; padding: 10px; border-bottom: 1px solid #eee; gap: 15px; }
 .player-item:last-child { border-bottom: none; }
@@ -107,7 +111,9 @@ body, html {
 
 /* ===== LEADERBOARD ===== */
 .live-leaderboard {
-    position: absolute; top: 110px; right: 40px; z-index: 10;
+    position: absolute; top: 110px; 
+    left: 40px; /* 📍 FIX : Déplacé à GAUCHE pour ne jamais gêner la map ! */
+    z-index: 10;
     background: rgba(10, 10, 10, 0.85); border: 2px solid var(--cyan);
     border-radius: 8px; padding: 15px; width: 280px;
     box-shadow: 0 5px 15px rgba(0,0,0,0.5); pointer-events: none;
@@ -123,7 +129,6 @@ body, html {
 .lb-head { width: 24px; height: 24px; border-radius: 4px; image-rendering: pixelated; margin-right: 8px; border: 1px solid #333; }
 
 /* ===== PODIUM FINAL ===== */
-/* 📍 Modification de la hauteur pour le 3ème */
 .podium { display: flex; justify-content: center; align-items: flex-end; gap: 15px; margin-top: 30px; height: 250px; }
 .podium-step {
     width: 30%; background: var(--cyan); border-radius: 8px 8px 0 0;
@@ -160,7 +165,8 @@ body, html {
 
 /* ===== MINIMAP ===== */
 #map-wrapper {
-    position: absolute; bottom: 30px; right: 30px; z-index: 10;
+    position: absolute; bottom: 30px; right: 30px; 
+    z-index: 40; /* 📍 FIX : Toujours au premier plan par rapport au reste ! */
     transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
     pointer-events: auto;
 }
