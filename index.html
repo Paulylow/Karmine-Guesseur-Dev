@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-width=1.0">
-    <title>KarmineGuesser - MODE DEV</title>
+    <title>KarmineGuesser</title>
     
     <link rel="icon" type="image/png" href="logo.png">
     <link rel="stylesheet" href="style.css">
@@ -22,21 +22,22 @@
     <div id="login-screen" class="screen">
         <div class="lobby-container login-box">
             <img src="logo.png" alt="Logo" class="lobby-logo">
-            <h1 class="lobby-title">MODE DÉVELOPPEUR</h1>
+            <h1 class="lobby-title">IDENTIFICATION</h1>
             
             <div class="input-group">
                 <label for="rp-name">Nom RP (RôlePlay)</label>
-                <input type="text" id="rp-name" placeholder="Ex: Développeur" autocomplete="off">
+                <input type="text" id="rp-name" placeholder="Ex: Jean Dupont" autocomplete="off">
             </div>
             
             <div class="input-group">
                 <label for="mc-pseudo">Pseudo Minecraft</label>
-                <input type="text" id="mc-pseudo" placeholder="Ex: Admin" autocomplete="off">
+                <input type="text" id="mc-pseudo" placeholder="Ex: Kameto" autocomplete="off">
             </div>
 
             <div class="input-group">
                 <label for="room-code">Code de la partie</label>
-                <input type="text" id="room-code" placeholder="Ex: DEV" autocomplete="off" style="text-transform: uppercase;">
+                <input type="text" id="room-code" placeholder="Ex: KCORP" autocomplete="off" style="text-transform: uppercase;">
+                <small>Crée un code ou rejoins celui de tes amis !</small>
             </div>
 
             <button id="join-lobby-btn" class="guess-btn">Rejoindre le Lobby</button>
@@ -45,7 +46,8 @@
 
     <div id="lobby-screen" class="screen hidden-screen">
         <div class="lobby-container">
-            <h1 class="lobby-title">SALLE DE CALIBRAGE (<span id="display-room-code" style="color:var(--cyan);">...</span>)<br>
+            <!-- 📍 Compteur de joueurs ajouté ici -->
+            <h1 class="lobby-title">SALLE D'ATTENTE (<span id="display-room-code" style="color:var(--cyan);">...</span>)<br>
             <span id="player-count" style="font-size: 18px; color: #888; display: block; margin-top: 5px; font-family: 'Satoshi', sans-serif; text-transform: none;">0 Joueur</span></h1>
             
             <div class="players-list" id="lobby-players">
@@ -53,16 +55,29 @@
             </div>
             
             <div id="host-settings" class="host-settings hidden-screen">
-                <h3 class="settings-title">⚙️ Paramètres de Calibrage</h3>
+                <h3 class="settings-title">⚙️ Paramètres de la partie</h3>
                 <div class="settings-grid">
-                    <div class="setting-item" style="flex: unset; width: 100%;">
-                        <label>Sélection</label>
+                    <div class="setting-item">
+                        <label>Nombre de Rounds</label>
                         <select id="setting-rounds" class="kg-select">
-                            <option value="13" selected>Lieux Spéciaux S (13 Lieux)</option>
+                            <option value="3">3 Rounds</option>
+                            <option value="5" selected>5 Rounds</option>
+                            <option value="10">10 Rounds</option>
+                            <option value="20">20 Rounds</option>
+                            <option value="49">Lieux normaux (49)</option>
+                            <option value="62">Tout + Lieux S (62)</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label>Temps par Round</label>
+                        <select id="setting-time" class="kg-select">
+                            <option value="15">15 secondes</option>
+                            <option value="30" selected>30 secondes</option>
+                            <option value="60">60 secondes</option>
                         </select>
                     </div>
                 </div>
-                <button id="start-game-btn" class="guess-btn">Lancer la calibration</button>
+                <button id="start-game-btn" class="guess-btn">Lancer la partie</button>
             </div>
             
             <p id="waiting-host-msg" class="lobby-info hidden-screen">En attente du lancement par l'hôte...</p>
@@ -76,21 +91,19 @@
             <div class="game-stats">
                 <div class="stat-box">
                     <span class="stat-label">Temps</span>
-                    <span class="stat-value" id="timer-display" style="font-size: 32px; line-height: 24px;">∞</span>
+                    <span class="stat-value" id="timer-display">30</span>
                 </div>
                 <div class="stat-box">
                     <span class="stat-label">Lieu</span>
-                    <span class="stat-value"><span id="round-display">1</span>/<span id="total-round-display">13</span></span>
+                    <span class="stat-value"><span id="round-display">1</span>/<span id="total-round-display">5</span></span>
                 </div>
             </div>
         </header>
 
         <div id="live-leaderboard" class="live-leaderboard">
-            <div class="leaderboard-title">CLASSEMENT DEV</div>
+            <div class="leaderboard-title">CLASSEMENT</div>
             <div id="leaderboard-content"></div>
         </div>
-
-        <button id="host-end-round-btn" class="guess-btn hidden-screen" style="position: absolute; bottom: 30px; left: 30px; width: auto; padding: 15px 30px; z-index: 100; pointer-events: auto; background: #ff4757; color: white;">🛑 FORCER LA FIN DU ROUND</button>
 
         <div id="map-wrapper">
             <div class="map-hover-area" id="map-container">
@@ -100,7 +113,7 @@
         </div>
 
         <div id="round-announcer" class="overlay hidden">
-            <h1 class="round-title" id="round-title-text" style="text-align: center; font-size: 80px;">ROUND 1<br><span style="font-size: 40px; color: white;" id="round-subtitle">Lieu X</span></h1>
+            <h1 class="round-title" id="round-title-text">ROUND 1</h1>
         </div>
 
         <div id="result-overlay" class="overlay hidden"></div>
@@ -110,16 +123,20 @@
             <p class="distance-text">Distance : <span id="distanceDisplay" class="cyan-text">0</span></p>
             <p class="score-num">+<span id="scoreDisplay">0</span> pts</p>
             <p class="waiting-text" id="waiting-msg">En attente des autres joueurs...</p>
-            <button id="host-next-round-btn" class="guess-btn hidden-screen" style="margin-top: 20px;">▶️ ROUND SUIVANT</button>
         </div>
     </div>
 
     <div id="podium-screen" class="screen hidden-screen">
         <div class="podium-container" style="max-height: 90vh; overflow-y: auto;">
             <img src="logo.png" alt="Logo" class="lobby-logo" style="margin-bottom: 20px;">
-            <h1 class="lobby-title" style="color: var(--cyan);">TOUTES LES MAPS SONT FAITES !</h1>
+            <h1 class="lobby-title" style="color: var(--cyan);">FIN DE LA PARTIE</h1>
+            
             <div class="podium" id="podium-content"></div>
-            <button id="return-lobby-btn" class="guess-btn" style="max-width: 300px; margin-top: 30px;">Retour au Menu</button>
+            
+            <!-- 📍 Liste des autres joueurs sous le podium -->
+            <div id="podium-others" class="players-list hidden-screen" style="margin-top: 30px; margin-bottom: 0;"></div>
+
+            <button id="return-lobby-btn" class="guess-btn" style="max-width: 300px; margin-top: 30px;">Nouvelle Partie</button>
         </div>
     </div>
 
